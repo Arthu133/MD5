@@ -107,7 +107,7 @@ for (const preset of presets) {
         preset,
         difficulty,
         score: score.total,
-        itemization: score.metrics.itemization,
+        rulesAdaptation: score.metrics.rulesAdaptation,
         roleFit: score.metrics.roleFit,
         outcomes: rates,
       }),

@@ -4354,3 +4354,584 @@ strong {
     padding: 12px;
   }
 }
+
+/* Accumulated roguelike cards */
+
+.rogue-selection-screen {
+  width: min(1240px, calc(100% - 48px));
+  margin: 48px auto 90px;
+}
+
+.rogue-selection-heading,
+.rogue-selection-confirm,
+.active-rogue-cards__heading,
+.rogue-live-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.rogue-selection-heading {
+  margin-bottom: 34px;
+}
+
+.rogue-selection-heading h1 {
+  margin-bottom: 12px;
+  font-size: clamp(38px, 5vw, 66px);
+}
+
+.rogue-selection-heading p:last-child {
+  max-width: 720px;
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.rogue-selection-heading__actions {
+  display: grid;
+  min-width: 210px;
+  gap: 10px;
+}
+
+.rogue-selection-heading__actions > span {
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.rogue-selection-heading__actions strong {
+  color: var(--gold-soft);
+  font-size: 18px;
+}
+
+.rogue-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.rogue-preparation-grid {
+  display: grid;
+  grid-template-columns: 310px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.rogue-card-options {
+  min-width: 0;
+}
+
+.rogue-card-options__heading {
+  margin-bottom: 14px;
+}
+
+.rogue-card-options__heading h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.rogue-next-match-score {
+  display: grid;
+  min-width: 190px;
+  gap: 5px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  text-align: right;
+}
+
+.rogue-next-match-score span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.rogue-next-match-score strong {
+  color: var(--gold-soft);
+  font-size: 15px;
+}
+
+.enemy-draft-preview {
+  padding: 18px;
+}
+
+.enemy-draft-preview__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.enemy-draft-preview__heading h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.enemy-draft-preview__heading > span {
+  padding: 5px 7px;
+  border: 1px solid rgba(255, 111, 126, 0.24);
+  color: #ff9aa5;
+  background: rgba(255, 111, 126, 0.06);
+  font-size: 7px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.enemy-draft-preview__list {
+  display: grid;
+  gap: 7px;
+}
+
+.enemy-draft-preview__list article {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 58px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.enemy-draft-preview__list img {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.enemy-draft-preview__list span,
+.enemy-draft-preview__list strong,
+.enemy-draft-preview__list small {
+  display: block;
+}
+
+.enemy-draft-preview__list span {
+  color: var(--gold);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.enemy-draft-preview__list strong {
+  margin: 2px 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enemy-draft-preview__list small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enemy-draft-preview__plan {
+  margin-top: 12px;
+  padding: 12px;
+  border-left: 2px solid var(--red);
+  background: rgba(255, 111, 126, 0.045);
+}
+
+.enemy-draft-preview__plan span,
+.enemy-draft-preview__plan strong {
+  display: block;
+}
+
+.enemy-draft-preview__plan span {
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.enemy-draft-preview__plan strong {
+  margin: 4px 0;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.enemy-draft-preview__plan p {
+  margin: 0;
+  color: #aab4c6;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.rogue-card {
+  position: relative;
+  isolation: isolate;
+  min-height: 410px;
+  overflow: hidden;
+  padding: 24px;
+  border: 1px solid rgba(153, 173, 208, 0.2);
+  border-radius: 14px;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% 22%, rgba(91, 165, 255, 0.14), transparent 31%),
+    linear-gradient(155deg, rgba(26, 35, 53, 0.98), rgba(11, 15, 24, 0.98));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.rogue-card::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+  inset: auto -20% -42% 28%;
+  height: 70%;
+  border: 1px solid rgba(228, 184, 95, 0.13);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+
+.rogue-card:hover,
+.rogue-card.is-selected {
+  border-color: rgba(228, 184, 95, 0.72);
+  transform: translateY(-7px);
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.36),
+    0 0 0 1px rgba(228, 184, 95, 0.14);
+}
+
+.rogue-card.is-selected {
+  background:
+    radial-gradient(circle at 50% 22%, rgba(228, 184, 95, 0.2), transparent 34%),
+    linear-gradient(155deg, rgba(39, 37, 43, 0.98), rgba(13, 16, 24, 0.98));
+}
+
+.rogue-card--epic {
+  border-color: rgba(154, 123, 255, 0.34);
+}
+
+.rogue-card--legendary {
+  border-color: rgba(228, 184, 95, 0.48);
+}
+
+.rogue-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.rogue-card__top > span {
+  color: var(--gold-soft);
+}
+
+.rogue-card__sigil {
+  display: grid;
+  width: 92px;
+  height: 92px;
+  margin: 42px auto 35px;
+  place-items: center;
+  border: 1px solid rgba(228, 184, 95, 0.42);
+  color: var(--gold-soft);
+  background:
+    radial-gradient(circle, rgba(228, 184, 95, 0.16), transparent 68%),
+    rgba(8, 11, 18, 0.62);
+  clip-path: polygon(50% 0, 92% 25%, 92% 75%, 50% 100%, 8% 75%, 8% 25%);
+  font-family: Georgia, serif;
+  font-size: 25px;
+}
+
+.rogue-card h3 {
+  margin-bottom: 10px;
+  font-size: 25px;
+}
+
+.rogue-card > p {
+  min-height: 48px;
+  color: #aab4c6;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.rogue-effect-summary {
+  display: grid;
+  gap: 7px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.rogue-effect-summary span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.rogue-effect-summary strong {
+  color: var(--green);
+}
+
+.rogue-card__hidden-effect {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rogue-selection-confirm {
+  margin: 20px 0 34px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.rogue-selection-confirm span,
+.rogue-selection-confirm strong {
+  display: block;
+}
+
+.rogue-selection-confirm p {
+  max-width: 760px;
+  margin: 7px 0 0;
+  color: #b8c5d9;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.rogue-selection-confirm__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.rogue-selection-confirm span {
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.active-rogue-cards {
+  margin-bottom: 22px;
+  padding: 22px;
+}
+
+.active-rogue-cards__heading {
+  margin-bottom: 16px;
+}
+
+.active-rogue-cards__heading h2 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.active-rogue-cards__heading > span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.active-rogue-cards__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.active-rogue-cards__list article {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.active-rogue-cards__list article > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid rgba(228, 184, 95, 0.3);
+  color: var(--gold-soft);
+  font-family: Georgia, serif;
+}
+
+.active-rogue-cards__list strong,
+.active-rogue-cards__list small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.active-rogue-cards__list strong {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.active-rogue-cards__list small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.active-rogue-cards__list em {
+  color: #69758a;
+  font-size: 7px;
+  font-style: normal;
+}
+
+.active-rogue-cards.is-compact .active-rogue-cards__list {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.rogue-live-heading {
+  margin-bottom: 16px;
+  padding: 20px 22px;
+}
+
+.rogue-live-heading h2 {
+  margin: 0;
+}
+
+.rogue-live-heading > span {
+  color: var(--gold-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.champion-summary__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px;
+}
+
+.champion-summary__stats span {
+  padding: 9px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 8px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.champion-summary__stats strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .rogue-preparation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .enemy-draft-preview__list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .enemy-draft-preview__list article {
+    grid-template-columns: 1fr;
+  }
+
+  .enemy-draft-preview__list img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .rogue-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rogue-card {
+    min-height: 0;
+  }
+
+  .rogue-card__sigil {
+    margin: 25px auto;
+  }
+
+  .active-rogue-cards__list,
+  .active-rogue-cards.is-compact .active-rogue-cards__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .rogue-selection-screen {
+    width: min(100% - 24px, 1240px);
+    margin-top: 28px;
+  }
+
+  .rogue-selection-heading,
+  .rogue-selection-confirm,
+  .active-rogue-cards__heading,
+  .rogue-live-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rogue-selection-heading__actions {
+    width: 100%;
+  }
+
+  .active-rogue-cards__list,
+  .active-rogue-cards.is-compact .active-rogue-cards__list {
+    grid-template-columns: 1fr;
+  }
+
+  .rogue-selection-confirm .primary-button {
+    width: 100%;
+  }
+
+  .rogue-selection-confirm__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rogue-selection-confirm__actions button {
+    width: 100%;
+  }
+
+  .enemy-draft-preview__list {
+    grid-template-columns: 1fr;
+  }
+
+  .enemy-draft-preview__list article {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .enemy-draft-preview__list img {
+    width: 48px;
+    height: 48px;
+  }
+}

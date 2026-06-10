@@ -1,4 +1,3 @@
-import { calculateBuildScore } from "../engine/buildEngine";
 import type { ChampionBuild } from "../types/game";
 
 type BuildSummaryProps = {
@@ -7,19 +6,11 @@ type BuildSummaryProps = {
   hiddenInsights?: boolean;
 };
 
-const buildLabel = (score: number) => {
-  if (score >= 85) return "Excelente";
-  if (score >= 72) return "Boa";
-  if (score >= 58) return "Instável";
-  return "Arriscada";
-};
-
 export function BuildSummary({
   build,
   compact = false,
   hiddenInsights = false,
 }: BuildSummaryProps) {
-  const score = calculateBuildScore(build.champion, build.items);
   const functionLabel = build.champion.classes.includes("Engager")
     ? "Iniciação"
     : build.champion.classes.includes("Tank")
@@ -31,9 +22,15 @@ export function BuildSummary({
           : build.champion.classes.includes("Assassin")
             ? "Pickoff"
             : "Controle";
+  const primaryPower = Math.max(
+    build.champion.stats.damageAD,
+    build.champion.stats.damageAP,
+  );
 
   return (
-    <article className={`build-summary ${compact ? "build-summary--compact" : ""}`}>
+    <article
+      className={`build-summary champion-summary ${compact ? "build-summary--compact" : ""}`}
+    >
       <div className="build-summary__champion">
         <img src={build.champion.image} alt="" />
         <div>
@@ -43,28 +40,26 @@ export function BuildSummary({
         </div>
         {!hiddenInsights ? (
           <div className="score-orb">
-            <strong>{score.total}</strong>
-            <span>build</span>
+            <strong>{primaryPower}</strong>
+            <span>poder</span>
           </div>
         ) : null}
       </div>
-      <div className="build-summary__items">
-        {build.items.map((item) => (
-          <div className="mini-item" key={item.id} title={item.description}>
-            <img src={item.icon} alt="" />
-            <small>{item.name}</small>
-          </div>
-        ))}
-      </div>
       {!compact && !hiddenInsights ? (
-        <div className="build-summary__analysis">
-          <span>Build: <strong>{buildLabel(score.total)}</strong></span>
-          <span>Pico: <strong>{score.spikeTiming}</strong></span>
-          <p>{score.reasons[0] ?? score.warnings[0]}</p>
+        <div className="champion-summary__stats">
+          <span>
+            Early <strong>{build.champion.stats.earlyPressure}</strong>
+          </span>
+          <span>
+            Team fight <strong>{build.champion.stats.teamFight}</strong>
+          </span>
+          <span>
+            Scaling <strong>{build.champion.stats.scaling}</strong>
+          </span>
         </div>
       ) : hiddenInsights ? (
         <div className="build-summary__analysis">
-          <span>Leitura estratégica oculta até a simulação.</span>
+          <span>Leitura estratégica oculta até o fim da campanha.</span>
         </div>
       ) : null}
     </article>

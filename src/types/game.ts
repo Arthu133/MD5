@@ -326,7 +326,8 @@ export type TeamMetrics = {
   scaling: number;
   earlyGame: number;
   objectiveControl: number;
-  itemization: number;
+  cardSynergy: number;
+  rulesAdaptation: number;
   consistency: number;
   executionDifficulty: number;
   teamFight: number;
@@ -354,13 +355,13 @@ export type TeamScore = {
   metrics: TeamMetrics;
   synergyBonus: number;
   championStrength: number;
-  buildCoherence: number;
+  cardSynergy: number;
+  rulesAdaptation: number;
   damageBalance: number;
   winConditionClarity: number;
   strengths: string[];
   weaknesses: string[];
   warnings: string[];
-  itemWarnings: string[];
   roleWarnings: string[];
   winCondition: string;
 };
@@ -402,7 +403,7 @@ export type EnemyOrganizationProfile = {
   scalingPreference: number;
   objectiveFocus: number;
   draftDiscipline: number;
-  itemizationDiscipline: number;
+  rulesDiscipline: number;
   adaptability: number;
 };
 
@@ -413,7 +414,7 @@ export type CompetitiveEnemyTeam = EnemyTeam & {
   templateName: string;
   metaRating: number;
   draftCoherence: number;
-  itemizationQuality: number;
+  rulesAdaptation: number;
   simulatedDraft: DraftTeam;
   winCondition: string;
   mainThreat: string;
@@ -447,6 +448,7 @@ export type MatchResult = {
   win: boolean;
   reason: string;
   liveSimulation: LiveMatchSimulation;
+  activeCards?: ActiveRogueCard[];
 };
 
 export type SeriesResult = {
@@ -472,6 +474,121 @@ export type CampaignResult = {
   matches: MatchResult[];
   series: SeriesResult[];
   finalDiagnosis: string;
+  activeCards?: ActiveRogueCard[];
+};
+
+export type RogueCardId = string;
+
+export type RogueCardRarity = "Common" | "Rare" | "Epic" | "Legendary";
+
+export type RogueCardTiming =
+  | "Campaign"
+  | "Match"
+  | "Series"
+  | "Draft"
+  | "Simulation";
+
+export type RogueCardEffectTarget =
+  | "BothTeams"
+  | "UserTeam"
+  | "EnemyTeam"
+  | "Tournament"
+  | "DraftEngine"
+  | "LiveMatchEngine";
+
+export type RogueCardOperation =
+  | "add"
+  | "multiply"
+  | "cap"
+  | "reduce"
+  | "increase";
+
+export type RogueRuleModifiers = {
+  durationMinutes: number;
+  varianceMultiplier: number;
+  teamScoreWeight: number;
+  fightChanceMultiplier: number;
+  killGoldMultiplier: number;
+  objectiveValueMultiplier: number;
+  dragonValueMultiplier: number;
+  baronPressureMultiplier: number;
+  towerChanceMultiplier: number;
+  towerResistance: number;
+  inhibitorResistance: number;
+  nexusResistance: number;
+  objectiveStealChance: number;
+  comebackMultiplier: number;
+  snowballMultiplier: number;
+  earlyObjectiveOffset: number;
+  enemyDraftQuality: number;
+  roleFitModifier: number;
+  offMetaModifier: number;
+  scoreCapModifier: number;
+  mentalReset: number;
+  momentum: number;
+};
+
+export type RogueCardCondition = {
+  roles?: Role[];
+  classes?: ChampionClass[];
+  damageProfiles?: DamageProfile[];
+  archetypes?: TeamArchetype[];
+  stages?: TournamentStage[];
+  gameNumberInSeries?: number;
+  isBehindInGold?: boolean;
+  isAheadInGold?: boolean;
+  isOffRole?: boolean;
+  hasBalancedDamage?: boolean;
+  hasFullAD?: boolean;
+  hasFullAP?: boolean;
+};
+
+export type RogueCardEffect = {
+  type:
+    | "ChampionStatModifier"
+    | "TeamScoreModifier"
+    | "DraftRuleModifier"
+    | "ObjectiveModifier"
+    | "MapModifier"
+    | "SeriesModifier"
+    | "SimulationVarianceModifier"
+    | "GameDurationModifier"
+    | "EnemyAIModifier"
+    | "ScoreCapModifier";
+  stat?: keyof ChampionProfile["stats"];
+  metric?: keyof TeamMetrics;
+  rule?: keyof RogueRuleModifiers;
+  operation: RogueCardOperation;
+  value: number;
+  condition?: RogueCardCondition;
+};
+
+export type RogueCard = {
+  id: RogueCardId;
+  name: string;
+  description: string;
+  rarity: RogueCardRarity;
+  timing: RogueCardTiming[];
+  target: RogueCardEffectTarget[];
+  tags: string[];
+  effects: RogueCardEffect[];
+};
+
+export type ActiveRogueCard = {
+  card: RogueCard;
+  pickedBeforeMatchId: string;
+  pickedAtStage: TournamentStage;
+};
+
+export type CardPickContext = {
+  matchId: string;
+  stage: TournamentStage;
+  userTeam: DraftTeam;
+  enemyTeam: DraftTeam;
+  enemyName: string;
+  enemyArchetype: TeamArchetype;
+  activeCards: ActiveRogueCard[];
+  difficulty: GameDifficulty;
 };
 
 export type MatchEventType =
@@ -568,6 +685,10 @@ export type MatchContext = {
   userPower: number;
   seriesUserWins: number;
   seriesEnemyWins: number;
+  userTeam?: DraftTeam;
+  enemyTeam?: DraftTeam;
+  activeCards?: ActiveRogueCard[];
+  rogueModifiers?: RogueRuleModifiers;
 };
 
 export type LiveMatchSimulation = {
@@ -580,9 +701,13 @@ export type LiveMatchSimulation = {
   enemyName: string;
   enemyTier: EnemyTier;
   enemyArchetype: TeamArchetype;
+  userDraft?: DraftTeam;
+  enemyDraft?: DraftTeam;
   durationMinutes: number;
   finalWinner: MatchSide;
   finalReason: string;
   events: LiveMatchEvent[];
   statsByMinute: LiveMatchStats[];
+  activeCards?: ActiveRogueCard[];
+  rogueCardSummary?: string[];
 };

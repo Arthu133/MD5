@@ -15,7 +15,7 @@ const organization = (
   scalingPreference: values[1],
   objectiveFocus: values[2],
   draftDiscipline: values[3],
-  itemizationDiscipline: values[4],
+  rulesDiscipline: values[4],
   adaptability: values[5],
 });
 

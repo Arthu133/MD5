@@ -22,10 +22,10 @@ export function generateFinalDiagnosis(result: CampaignResult): string {
   const weakness = teamScore.weaknesses[0]
     ? ` O maior risco foi ${teamScore.weaknesses[0].toLowerCase()}.`
     : "";
-  const itemNote =
-    teamScore.itemWarnings.length > 0
-      ? " A itemização perdeu eficiência em pontos importantes e isso pesou nas séries longas."
-      : " A itemização sustentou bem a identidade dos cinco campeões.";
+  const cardNote =
+    result.activeCards?.length
+      ? ` As ${result.activeCards.length} cartas acumuladas levaram a sinergia para ${teamScore.cardSynergy}/100 e a adaptação para ${teamScore.rulesAdaptation}/100.`
+      : " A campanha terminou sem regras acumuladas relevantes.";
   const roleNote =
     teamScore.roleWarnings.length > 0
       ? " Escolhas fora de função reduziram pressão de rota, objetivos e capacidade de adaptação."
@@ -35,7 +35,7 @@ export function generateFinalDiagnosis(result: CampaignResult): string {
     ? ` ${decisiveSeries.enemy.name} venceu com ${decisiveSeries.enemy.mainThreat}, apoiado por um draft ${decisiveSeries.enemy.draftCoherence}/100.`
     : "";
 
-  return `${opening}${strength}${weakness}${itemNote}${roleNote}${opponentNote}`;
+  return `${opening}${strength}${weakness}${cardNote}${roleNote}${opponentNote}`;
 }
 
 export function generateShareText(
@@ -71,7 +71,8 @@ ${builds}
 
 Arquétipo: ${result.teamScore.archetype}
 Nota: ${result.teamScore.total}/100
-Itemização: ${result.teamScore.metrics.itemization}/100
+Cartas ativas: ${result.activeCards?.length ?? 0}
+Sinergia das cartas: ${result.teamScore.cardSynergy}/100
 
 Consegue ganhar uma MD5?`;
 }

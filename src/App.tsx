@@ -2,26 +2,22 @@ import { useMemo, useState } from "react";
 import { BuildSummary } from "./components/BuildSummary";
 import { ChampionCard } from "./components/ChampionCard";
 import { DraftBoard } from "./components/DraftBoard";
-import { ItemSelection } from "./components/ItemSelection";
-import { LiveMatchScreen } from "./components/LiveMatchScreen";
 import { ResultScreen } from "./components/ResultScreen";
+import { RogueTournamentScreen } from "./components/RogueTournamentScreen";
 import { TeamAnalysis } from "./components/TeamAnalysis";
 import { DATA_DRAGON_VERSION } from "./data/champions/generatedChampions";
 import { getRandomChampionsForRole } from "./engine/draftEngine";
-import { getRandomItemsForChampion } from "./engine/itemEngine";
 import {
   canUseRefresh,
   consumeRefresh,
   refreshByDifficulty,
 } from "./engine/refreshEngine";
-import { simulateCampaign } from "./engine/simulationEngine";
 import { calculateTeamScore } from "./engine/synergyEngine";
 import type {
   CampaignResult,
   ChampionProfile,
   DraftTeam,
   GameDifficulty,
-  Item,
   SimulationMode,
   SimulationSpeed,
 } from "./types/game";
@@ -34,12 +30,9 @@ function App() {
   const [roleIndex, setRoleIndex] = useState(0);
   const [team, setTeam] = useState<DraftTeam>([]);
   const [championOptions, setChampionOptions] = useState<ChampionProfile[]>([]);
-  const [selectedChampion, setSelectedChampion] = useState<ChampionProfile | null>(null);
-  const [itemOptions, setItemOptions] = useState<Item[]>([]);
   const [result, setResult] = useState<CampaignResult | null>(null);
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
   const [refreshesRemaining, setRefreshesRemaining] = useState(0);
-  const [itemRefreshVersion, setItemRefreshVersion] = useState(0);
   const [simulationMode, setSimulationMode] =
     useState<SimulationMode>("Automatic");
   const [simulationSpeed, setSimulationSpeed] =
@@ -57,11 +50,8 @@ function App() {
     if (!difficulty) return;
     setTeam([]);
     setRoleIndex(0);
-    setSelectedChampion(null);
-    setItemOptions([]);
     setResult(null);
     setRefreshesRemaining(refreshByDifficulty[difficulty]);
-    setItemRefreshVersion(0);
     setChampionOptions(
       getRandomChampionsForRole(ROLES[0], [], 10, difficulty),
     );
@@ -70,57 +60,11 @@ function App() {
   };
 
   const chooseChampion = (champion: ChampionProfile) => {
-    setSelectedChampion(champion);
-    setItemOptions(getRandomItemsForChampion(champion));
-  };
-
-  const refreshChampionOptions = () => {
-    if (!difficulty || !canUseRefresh(refreshesRemaining)) return;
-    const selectedIds = team.map((build) => build.champion.id);
-    const withoutCurrentOptions = [
-      ...selectedIds,
-      ...championOptions.map((champion) => champion.id),
-    ];
-    const refreshed = getRandomChampionsForRole(
-      currentRole,
-      withoutCurrentOptions,
-      10,
-      difficulty,
-    );
-    setChampionOptions(
-      refreshed.length === 10
-        ? refreshed
-        : getRandomChampionsForRole(currentRole, selectedIds, 10, difficulty),
-    );
-    setRefreshesRemaining(consumeRefresh);
-  };
-
-  const refreshItemOptions = () => {
-    if (!selectedChampion || !canUseRefresh(refreshesRemaining)) return;
-    setItemOptions(
-      getRandomItemsForChampion(
-        selectedChampion,
-        9,
-        itemOptions.map((item) => item.id),
-      ),
-    );
-    setItemRefreshVersion((version) => version + 1);
-    setRefreshesRemaining(consumeRefresh);
-  };
-
-  const confirmItems = (selectedItems: Item[]) => {
-    if (!selectedChampion || selectedItems.length !== 3) return;
     const nextTeam: DraftTeam = [
       ...team,
-      {
-        role: currentRole,
-        champion: selectedChampion,
-        items: selectedItems,
-      },
+      { role: currentRole, champion, items: [] },
     ];
     setTeam(nextTeam);
-    setSelectedChampion(null);
-    setItemOptions([]);
 
     if (roleIndex === ROLES.length - 1) {
       setStage("review");
@@ -141,12 +85,25 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const runCampaign = () => {
-    if (!difficulty) return;
-    const campaignResult = simulateCampaign(team, difficulty);
-    setResult(campaignResult);
-    setStage("live");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const refreshChampionOptions = () => {
+    if (!difficulty || !canUseRefresh(refreshesRemaining)) return;
+    const selectedIds = team.map((build) => build.champion.id);
+    const excluded = [
+      ...selectedIds,
+      ...championOptions.map((champion) => champion.id),
+    ];
+    const refreshed = getRandomChampionsForRole(
+      currentRole,
+      excluded,
+      10,
+      difficulty,
+    );
+    setChampionOptions(
+      refreshed.length === 10
+        ? refreshed
+        : getRandomChampionsForRole(currentRole, selectedIds, 10, difficulty),
+    );
+    setRefreshesRemaining(consumeRefresh);
   };
 
   return (
@@ -154,7 +111,9 @@ function App() {
       <header className="site-header">
         <button className="brand" type="button" onClick={() => setStage("intro")}>
           <span className="brand__mark">M</span>
-          <span>MD<strong>5</strong></span>
+          <span>
+            MD<strong>5</strong>
+          </span>
         </button>
         <div className="header-status">
           <span className="status-dot" />
@@ -170,14 +129,18 @@ function App() {
             <div className="intro-hero__grid" />
             <div className="intro-copy">
               <p className="step-kicker">META. DRAFT. MATA-MATA.</p>
-              <h1 className="md5-title">MD<span>5</span></h1>
-              <h2>Monte seu draft. Escolha seus itens. Sobreviva ao mata-mata.</h2>
+              <h1 className="md5-title">
+                MD<span>5</span>
+              </h1>
+              <h2>Monte seu draft. Acumule regras. Sobreviva ao mata-mata.</h2>
               <p>
-                Escolha campeões reais, monte builds inteligentes e enfrente
-                equipes competitivas em um torneio com fase de grupos e séries
-                melhor de 5.
+                Escolha campeões reais e transforme cada partida com cartas
+                roguelike que permanecem ativas durante todo o torneio.
               </p>
-              <div className="difficulty-selector" aria-label="Escolha a dificuldade">
+              <div
+                className="difficulty-selector"
+                aria-label="Escolha a dificuldade"
+              >
                 <button
                   className={`difficulty-card ${difficulty === "Classic" ? "is-selected" : ""}`}
                   type="button"
@@ -186,7 +149,8 @@ function App() {
                 >
                   <span>Clássico</span>
                   <small>
-                    Mostra informações úteis. Ideal para aprender e testar composições.
+                    3 Refresh globais e efeitos detalhados. Ideal para aprender
+                    como as regras alteram o torneio.
                   </small>
                 </button>
                 <button
@@ -197,7 +161,8 @@ function App() {
                 >
                   <span>Difícil</span>
                   <small>
-                    Esconde detalhes. Você escolhe pelo conhecimento, leitura e intuição.
+                    1 Refresh global e números internos ocultos. Decida pela
+                    leitura, conhecimento e intuição.
                   </small>
                 </button>
               </div>
@@ -233,80 +198,32 @@ function App() {
                   <span>5</span>
                   <small>melhor de</small>
                 </div>
-                <span className="map-node map-node--one">TOP</span>
-                <span className="map-node map-node--two">MID</span>
-                <span className="map-node map-node--three">BOT</span>
               </div>
               <div className="orbit orbit--one" />
               <div className="orbit orbit--two" />
-              <div className="record-strip">
-                <span>W</span><span>W</span><span>L</span><span>W</span><span>W</span>
-              </div>
             </div>
           </section>
           <section className="intro-features md5-features" id="como-funciona">
             <article>
               <strong>01</strong>
               <span>Draft competitivo</span>
-              <p>Escolha 1 campeão entre 10 opções para cada posição.</p>
+              <p>Escolha um campeão entre 10 opções para cada posição.</p>
             </article>
             <article>
               <strong>02</strong>
-              <span>Builds que importam</span>
-              <p>Selecione 3 entre 9 itens. Uma build ruim pode destruir o plano.</p>
+              <span>Cartas acumulativas</span>
+              <p>Antes de cada jogo, escolha uma entre três regras permanentes.</p>
             </article>
             <article>
               <strong>03</strong>
-              <span>Meta e estratégia</span>
-              <p>Adversários coerentes punem drafts previsíveis e frágeis.</p>
+              <span>Partidas transformadas</span>
+              <p>Objetivos, mapa, duração, drafts e resultados obedecem às cartas.</p>
             </article>
             <article>
               <strong>04</strong>
               <span>Séries MD5</span>
               <p>Passe dos grupos e vença quartas, semifinal e final.</p>
             </article>
-          </section>
-          <section className="home-section role-showcase">
-            <div className="home-section__heading">
-              <p className="eyebrow">CINCO FUNÇÕES, UM PLANO</p>
-              <h2>Monte uma composição completa</h2>
-            </div>
-            <div className="role-showcase__grid">
-              {[
-                ["T", "Top", "Frontline, duelo ou pressão lateral."],
-                ["J", "Jungle", "Mapa, objetivos e ritmo de jogo."],
-                ["M", "Mid", "Controle, burst ou presença global."],
-                ["C", "Carry", "Dano constante e condição de vitória."],
-                ["S", "Support", "Peel, engage, visão e proteção."],
-              ].map(([icon, role, description]) => (
-                <article key={role}>
-                  <span>{icon}</span>
-                  <h3>{role}</h3>
-                  <p>{description}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-          <section className="home-section tournament-preview">
-            <div className="home-section__heading">
-              <p className="eyebrow">FORMATO COMPETITIVO</p>
-              <h2>Um torneio, não sete partidas soltas</h2>
-            </div>
-            <div className="tournament-path">
-              {[
-                ["01", "Fase de Grupos", "3 confrontos"],
-                ["02", "Quartas de Final", "MD5"],
-                ["03", "Semifinal", "MD5"],
-                ["04", "Final MD5", "Pelo título"],
-              ].map(([number, title, detail], index) => (
-                <article key={title}>
-                  <span>{number}</span>
-                  <strong>{title}</strong>
-                  <small>{detail}</small>
-                  {index < 3 ? <i>→</i> : null}
-                </article>
-              ))}
-            </div>
           </section>
         </main>
       ) : null}
@@ -318,14 +235,11 @@ function App() {
             <div className="progress-header">
               <div>
                 <p className="step-kicker">
-                  POSIÇÃO {roleIndex + 1} DE 5 · MODO {difficulty === "Hard" ? "DIFÍCIL" : "CLÁSSICO"}
+                  POSIÇÃO {roleIndex + 1} DE 5 · MODO{" "}
+                  {difficulty === "Hard" ? "DIFÍCIL" : "CLÁSSICO"}
                 </p>
-                <h1>{selectedChampion ? "Feche a build" : `Escolha seu ${currentRole}`}</h1>
-                <p>
-                  {selectedChampion
-                    ? "Três itens definem como este campeão entra na composição."
-                    : "Dez opções. Uma escolha. Nenhum campeão se repete."}
-                </p>
+                <h1>Escolha seu {currentRole}</h1>
+                <p>Dez opções. Uma escolha. Nenhum campeão se repete.</p>
               </div>
               <div className="role-progress">
                 {ROLES.map((role, index) => (
@@ -337,41 +251,26 @@ function App() {
                   </span>
                 ))}
               </div>
-              {!selectedChampion ? (
-                <button
-                  className="secondary-button refresh-button"
-                  type="button"
-                  disabled={!canUseRefresh(refreshesRemaining)}
-                  onClick={refreshChampionOptions}
-                >
-                  Atualizar opções ({refreshesRemaining})
-                </button>
-              ) : null}
+              <button
+                className="secondary-button refresh-button"
+                type="button"
+                disabled={!canUseRefresh(refreshesRemaining)}
+                onClick={refreshChampionOptions}
+              >
+                Atualizar opções ({refreshesRemaining})
+              </button>
             </div>
-
-            {!selectedChampion ? (
-              <section className="champion-grid">
-                {championOptions.map((champion) => (
-                  <ChampionCard
-                    key={champion.id}
-                    champion={champion}
-                    role={currentRole}
-                    onSelect={chooseChampion}
-                    gameDifficulty={difficulty ?? "Classic"}
-                  />
-                ))}
-              </section>
-            ) : (
-              <ItemSelection
-                key={`${selectedChampion.id}-${itemRefreshVersion}`}
-                champion={selectedChampion}
-                difficulty={difficulty ?? "Classic"}
-                options={itemOptions}
-                refreshesRemaining={refreshesRemaining}
-                onRefresh={refreshItemOptions}
-                onConfirm={confirmItems}
-              />
-            )}
+            <section className="champion-grid">
+              {championOptions.map((champion) => (
+                <ChampionCard
+                  key={champion.id}
+                  champion={champion}
+                  role={currentRole}
+                  onSelect={chooseChampion}
+                  gameDifficulty={difficulty ?? "Classic"}
+                />
+              ))}
+            </section>
           </div>
         </main>
       ) : null}
@@ -383,17 +282,23 @@ function App() {
               <p className="step-kicker">DRAFT COMPLETO</p>
               <h1>Seu elenco está inscrito.</h1>
               <p>
-                Grupos, quartas, semifinal e final vão testar a coerência desse draft.
+                A partir de agora, uma nova carta será escolhida antes de cada
+                partida e ficará ativa até o fim da campanha.
               </p>
             </div>
             <div className="review-score">
               <span>
-                {difficulty === "Hard" ? "Análise preliminar" : "Nota preliminar"}
+                {difficulty === "Hard"
+                  ? "Análise preliminar"
+                  : "Nota preliminar"}
               </span>
               {difficulty === "Hard" ? (
                 <strong className="review-score__hidden">Oculta</strong>
               ) : (
-                <strong>{teamScore.total}<small>/100</small></strong>
+                <strong>
+                  {teamScore.total}
+                  <small>/100</small>
+                </strong>
               )}
             </div>
           </div>
@@ -411,10 +316,10 @@ function App() {
           ) : (
             <section className="blind-review panel">
               <p className="eyebrow">MODO DIFÍCIL</p>
-              <h2>O motor já encontrou riscos, mas não vai revelá-los agora.</h2>
+              <h2>Os riscos estratégicos permanecem ocultos por enquanto.</h2>
               <p>
-                Encaixe nas posições, compatibilidade dos itens e condição de
-                vitória serão mostrados somente depois da simulação.
+                Encaixe nas posições, condição de vitória e números das cartas
+                serão revelados somente depois da campanha.
               </p>
             </section>
           )}
@@ -423,7 +328,8 @@ function App() {
               <p className="eyebrow">TRANSMISSÃO DO TORNEIO</p>
               <h2>Como você quer acompanhar?</h2>
               <p>
-                Acompanhe objetivos, lutas e pressão pelo mapa sem revelar o resultado.
+                A escolha de cartas sempre será manual. O modo define apenas a
+                passagem entre a partida encerrada e a próxima escolha.
               </p>
             </div>
             <div className="simulation-option-group">
@@ -444,9 +350,6 @@ function App() {
                   Manual
                 </button>
               </div>
-              <small>
-                No Manual, cada partida roda até o fim e você decide quando começa a próxima.
-              </small>
             </div>
             <div className="simulation-option-group">
               <span>Velocidade inicial</span>
@@ -471,20 +374,30 @@ function App() {
             <button
               className="primary-button primary-button--large"
               type="button"
-              onClick={runCampaign}
+              onClick={() => {
+                setStage("live");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
             >
-              Iniciar simulação
+              Escolher primeira carta
             </button>
           </div>
         </main>
       ) : null}
 
-      {stage === "live" && result ? (
-        <LiveMatchScreen
-          result={result}
-          initialMode={simulationMode}
-          initialSpeed={simulationSpeed}
-          onTournamentFinished={() => {
+      {stage === "live" && difficulty ? (
+        <RogueTournamentScreen
+          team={team}
+          difficulty={difficulty}
+          simulationMode={simulationMode}
+          simulationSpeed={simulationSpeed}
+          onModeChange={setSimulationMode}
+          onSpeedChange={setSimulationSpeed}
+          refreshesRemaining={refreshesRemaining}
+          onConsumeRefresh={() => setRefreshesRemaining(consumeRefresh)}
+          onDisableRefresh={() => setRefreshesRemaining(0)}
+          onComplete={(campaignResult) => {
+            setResult(campaignResult);
             setStage("result");
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
@@ -498,7 +411,8 @@ function App() {
       <footer className="site-footer">
         <p>
           MD5 é um fan project independente e não é endossado pela Riot Games.
-          League of Legends e propriedades associadas pertencem à Riot Games, Inc.
+          League of Legends e propriedades associadas pertencem à Riot Games,
+          Inc.
         </p>
       </footer>
     </div>

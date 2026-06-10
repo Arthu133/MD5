@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { generateShareText } from "../engine/diagnosisEngine";
 import type { CampaignResult, DraftTeam, TournamentStage } from "../types/game";
+import { ActiveRogueCardsPanel } from "./ActiveRogueCardsPanel";
 import { BuildSummary } from "./BuildSummary";
 import { MatchHistory } from "./MatchHistory";
 import { TeamAnalysis } from "./TeamAnalysis";
@@ -91,6 +92,7 @@ export function ResultScreen({
         ))}
       </section>
 
+      <ActiveRogueCardsPanel activeCards={result.activeCards ?? []} />
       <TeamAnalysis score={result.teamScore} />
       <MatchHistory series={result.series} />
 
@@ -125,14 +127,11 @@ export function ResultScreen({
           </ul>
         </article>
         <article className="panel">
-          <p className="eyebrow">AVISOS DE ITEMIZAÇÃO</p>
-          <ul className="insight-list insight-list--warning">
-            {(result.teamScore.itemWarnings.length
-              ? result.teamScore.itemWarnings
-              : ["As cinco builds mantiveram boa coerência."]
-            ).map((warning) => (
-              <li key={warning}>{warning}</li>
-            ))}
+          <p className="eyebrow">ADAPTAÇÃO ÀS REGRAS</p>
+          <ul className="insight-list insight-list--positive">
+            <li>Sinergia acumulada: {result.teamScore.cardSynergy}/100.</li>
+            <li>Adaptação da composição: {result.teamScore.rulesAdaptation}/100.</li>
+            <li>{result.activeCards?.length ?? 0} cartas permaneceram ativas no diagnóstico final.</li>
           </ul>
         </article>
         <article className="panel">

@@ -11,6 +11,7 @@ import type {
   StructureState,
   TeamScore,
 } from "../types/game";
+import { getRogueCardSummaryForMatch } from "./rogueCardEngine";
 
 export const matchSimulationTimeBudgetMs: Record<SimulationSpeed, number> = {
   Slow: 45_000,
@@ -24,12 +25,9 @@ export function calculateMatchTickMs(
   matchDurationMinutes: number,
 ): number {
   const budget = matchSimulationTimeBudgetMs[speed];
-  const renderingMargin =
-    speed === "UltraFast" ? 0.6 : speed === "Fast" ? 0.7 : 0.8;
-  const renderingSafeBudget = budget * renderingMargin;
   return Math.max(
-    60,
-    Math.floor(renderingSafeBudget / Math.max(matchDurationMinutes, 1)),
+    80,
+    Math.floor(budget / Math.max(matchDurationMinutes, 1)),
   );
 }
 
@@ -125,21 +123,30 @@ const calculateSidePower = (
 ) => {
   const lateGame = minute >= 28;
   const userMetrics = userTeamScore.metrics;
+  const modifiers = context.rogueModifiers;
+  const goldDifference = stats.userGold - stats.enemyGold;
   const userPower =
     userTeamScore.total * 0.4 +
-    userMetrics.itemization * 0.14 +
+    userMetrics.cardSynergy * 0.08 +
+    userMetrics.rulesAdaptation * 0.06 +
     userMetrics.objectiveControl * 0.12 +
     userMetrics.waveClear * 0.05 +
     (lateGame ? userMetrics.scaling : userMetrics.earlyGame) * 0.18 +
     userMetrics.consistency * 0.07 +
-    (stats.userGold - stats.enemyGold) / 900;
+    (goldDifference / 900) *
+      (goldDifference > 0 ? modifiers?.snowballMultiplier ?? 1 : 1) +
+    Math.max(0, -goldDifference / 1400) *
+      (modifiers?.comebackMultiplier ?? 1);
   const enemyPower =
     enemy.difficulty * 0.35 +
     enemy.draftCoherence * 0.16 +
-    enemy.itemizationQuality * 0.15 +
+    enemy.rulesAdaptation * 0.15 +
     enemy.modifiers.objectiveControl * 1.2 +
     (lateGame ? enemy.modifiers.scaling : enemy.modifiers.earlyPressure) * 1.4 +
-    (stats.enemyGold - stats.userGold) / 900;
+    (-goldDifference / 900) *
+      (goldDifference < 0 ? modifiers?.snowballMultiplier ?? 1 : 1) +
+    Math.max(0, goldDifference / 1400) *
+      (modifiers?.comebackMultiplier ?? 1);
   const expectedBias =
     context.expectedWinner === side
       ? minute < 18
@@ -345,6 +352,7 @@ const objectiveEvent = (
   type: "DragonTaken" | "HeraldTaken" | "BaronTaken",
   side: MatchSide,
   enemy: CompetitiveEnemyTeam,
+  valueMultiplier = 1,
 ) => {
   const team = sideName(side, enemy);
   if (type === "DragonTaken") {
@@ -356,7 +364,7 @@ const objectiveEvent = (
       "Dragão garantido",
       `${team} controlou o rio e confirmou o dragão antes da contestação.`,
       "High",
-      650,
+      Math.round(650 * valueMultiplier),
     );
   }
   if (type === "HeraldTaken") {
@@ -368,7 +376,7 @@ const objectiveEvent = (
       "Arauto conquistado",
       `${team} transformou prioridade de rota em controle do Arauto.`,
       "Medium",
-      500,
+      Math.round(500 * valueMultiplier),
     );
   }
   return createEvent(
@@ -379,7 +387,7 @@ const objectiveEvent = (
     "Barão garantido",
     `${team} encontrou a janela e saiu do covil com o bônus do Barão.`,
     "Critical",
-    1_500,
+    Math.round(1_500 * valueMultiplier),
   );
 };
 
@@ -391,10 +399,18 @@ export function generateMinuteEvents(
   context: MatchContext,
 ): LiveMatchEvent[] {
   const events: LiveMatchEvent[] = [];
+  const modifiers = context.rogueModifiers;
   const totalKills = currentStats.userKills + currentStats.enemyKills;
-  const dragonMinutes = [6, 12, 18, 24, 30, 36, 42, 48];
-  const heraldMinutes = [9, 15];
-  const baronMinutes = [23, 30, 37, 44];
+  const objectiveOffset = Math.round(modifiers?.earlyObjectiveOffset ?? 0);
+  const dragonMinutes = [6, 12, 18, 24, 30, 36, 42, 48].map((value) =>
+    Math.max(3, value + objectiveOffset),
+  );
+  const heraldMinutes = [9, 15].map((value) =>
+    Math.max(5, value + objectiveOffset),
+  );
+  const baronMinutes = [23, 30, 37, 44].map((value) =>
+    Math.max(20, value + objectiveOffset),
+  );
 
   if (minute >= 3 && minute <= 6 && totalKills === 0) {
     const mustHappen = minute === 6;
@@ -415,7 +431,11 @@ export function generateMinuteEvents(
           "First blood",
           `${sideName(side, enemy)} encontrou o primeiro abate após pressão no rio.`,
           "High",
-          700,
+          Math.round(
+            700 *
+              (modifiers?.killGoldMultiplier ?? 1) *
+              (modifiers?.snowballMultiplier ?? 1),
+          ),
         ),
       );
     }
@@ -430,7 +450,16 @@ export function generateMinuteEvents(
       context,
       0.08,
     );
-    events.push(objectiveEvent(minute, "DragonTaken", side, enemy));
+    events.push(
+      objectiveEvent(
+        minute,
+        "DragonTaken",
+        side,
+        enemy,
+        (modifiers?.objectiveValueMultiplier ?? 1) *
+          (modifiers?.dragonValueMultiplier ?? 1),
+      ),
+    );
   }
 
   if (heraldMinutes.includes(minute)) {
@@ -442,7 +471,15 @@ export function generateMinuteEvents(
       context,
       0.06,
     );
-    events.push(objectiveEvent(minute, "HeraldTaken", side, enemy));
+    events.push(
+      objectiveEvent(
+        minute,
+        "HeraldTaken",
+        side,
+        enemy,
+        modifiers?.objectiveValueMultiplier ?? 1,
+      ),
+    );
   }
 
   if (baronMinutes.includes(minute)) {
@@ -456,8 +493,8 @@ export function generateMinuteEvents(
     );
     const stealChance =
       Math.abs(currentStats.userGold - currentStats.enemyGold) < 2_500
-        ? 0.08
-        : 0.03;
+        ? 0.08 + (modifiers?.objectiveStealChance ?? 0)
+        : 0.03 + (modifiers?.objectiveStealChance ?? 0);
     events.push(
       Math.random() < stealChance
         ? createEvent(
@@ -468,13 +505,24 @@ export function generateMinuteEvents(
             "Roubo de Barão",
             `${sideName(side, enemy)} virou a disputa com um roubo no último instante.`,
             "Critical",
-            1_800,
+            Math.round(
+              1_800 * (modifiers?.objectiveValueMultiplier ?? 1),
+            ),
           )
-        : objectiveEvent(minute, "BaronTaken", side, enemy),
+        : objectiveEvent(
+            minute,
+            "BaronTaken",
+            side,
+            enemy,
+            (modifiers?.objectiveValueMultiplier ?? 1) *
+              (modifiers?.baronPressureMultiplier ?? 1),
+          ),
     );
   }
 
-  const fightChance = minute < 14 ? 0.09 : minute < 28 ? 0.16 : 0.2;
+  const fightChance =
+    (minute < 14 ? 0.09 : minute < 28 ? 0.16 : 0.2) *
+    (modifiers?.fightChanceMultiplier ?? 1);
   if (minute > 7 && Math.random() < fightChance) {
     const side = chooseSide(
       minute,
@@ -495,7 +543,7 @@ export function generateMinuteEvents(
           "Ace na luta",
           `${team} eliminou os cinco adversários e abriu o mapa por completo.`,
           "Critical",
-          2_100,
+          Math.round(2_100 * (modifiers?.killGoldMultiplier ?? 1)),
         ),
       );
     } else if (minute >= 14) {
@@ -508,7 +556,10 @@ export function generateMinuteEvents(
           "Luta vencida",
           `${team} executou melhor a luta em equipe e ganhou espaço no mapa.`,
           minute >= 28 ? "High" : "Medium",
-          minute >= 28 ? 1_350 : 950,
+          Math.round(
+            (minute >= 28 ? 1_350 : 950) *
+              (modifiers?.killGoldMultiplier ?? 1),
+          ),
         ),
       );
     } else {
@@ -521,7 +572,7 @@ export function generateMinuteEvents(
           "Pickoff encontrado",
           `${team} isolou um alvo durante a rotação e abriu vantagem.`,
           "Medium",
-          420,
+          Math.round(420 * (modifiers?.killGoldMultiplier ?? 1)),
         ),
       );
     }
@@ -549,8 +600,12 @@ export function generateMinuteEvents(
 
   const baronLead = currentStats.userBarons - currentStats.enemyBarons;
   const towerChance =
-    (minute < 10 ? 0 : minute < 22 ? 0.11 : 0.18) +
-    (baronLead !== 0 ? 0.07 : 0);
+    ((minute < 10 ? 0 : minute < 22 ? 0.11 : 0.18) +
+      (baronLead !== 0
+        ? 0.07 * (modifiers?.baronPressureMultiplier ?? 1)
+        : 0)) *
+    (modifiers?.towerChanceMultiplier ?? 1) *
+    Math.max(0.3, 1 - (modifiers?.towerResistance ?? 0));
   if (Math.random() < towerChance) {
     const side = chooseSide(
       minute,
@@ -613,7 +668,11 @@ export function generateMinuteEvents(
     );
   }
 
-  if (minute >= 28 && Math.random() < 0.08) {
+  if (
+    minute >= 28 &&
+    Math.random() <
+      0.08 * Math.max(0.25, 1 - (modifiers?.inhibitorResistance ?? 0))
+  ) {
     const side = chooseSide(
       minute,
       currentStats,
@@ -720,9 +779,9 @@ export function calculateProfessionalGameDuration(
   const winnerObjectiveControl = winnerIsUser
     ? userMetrics.objectiveControl
     : enemy.modifiers.objectiveControl * 10;
-  const winnerItemization = winnerIsUser
-    ? userMetrics.itemization
-    : enemy.itemizationQuality;
+  const winnerAdaptation = winnerIsUser
+    ? userMetrics.rulesAdaptation
+    : enemy.rulesAdaptation;
 
   if (powerGap >= 30) duration -= 4;
   else if (powerGap >= 20) duration -= 2;
@@ -733,11 +792,13 @@ export function calculateProfessionalGameDuration(
   else if (winningArchetype === "Scaling") duration += 2;
 
   if (winnerObjectiveControl >= 72) duration -= 1;
-  if (winnerItemization >= 82) duration -= 1;
-  if (winnerItemization < 58) duration += 2;
+  if (winnerAdaptation >= 82) duration -= 1;
+  if (winnerAdaptation < 58) duration += 2;
   if (context.stage === "Final" && powerGap <= 12) duration += 2;
+  duration += context.rogueModifiers?.durationMinutes ?? 0;
+  duration += Math.round((context.rogueModifiers?.nexusResistance ?? 0) * 4);
 
-  return Math.round(clamp(duration, 23, 48));
+  return Math.round(clamp(duration, 18, 55));
 }
 
 const summaryPriority: Record<LiveMatchEvent["type"], number> = {
@@ -841,7 +902,7 @@ export function generateLiveMatchEndReason(
     userTeamScore.metrics.scaling >= 65 &&
     simulation.durationMinutes >= 34
   ) {
-    return "MD5 absorveu a pressão inicial, alcançou seus picos de item e venceu a luta decisiva no late game.";
+    return "MD5 absorveu a pressão inicial, alcançou seu pico de composição e venceu a luta decisiva no late game.";
   }
   if (
     simulation.finalWinner === "Enemy" &&
@@ -1025,11 +1086,17 @@ export function simulateLiveMatch(
     enemyName: enemy.name,
     enemyTier: enemy.tier,
     enemyArchetype: enemy.archetype,
+    userDraft: context.userTeam,
+    enemyDraft: context.enemyTeam,
     durationMinutes,
     finalWinner,
     finalReason: "",
     events,
     statsByMinute,
+    activeCards: context.activeCards,
+    rogueCardSummary: getRogueCardSummaryForMatch(
+      context.activeCards ?? [],
+    ),
   };
   simulation.finalReason = generateLiveMatchEndReason(
     simulation,

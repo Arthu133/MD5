@@ -1,117 +1,119 @@
 import type {
   DraftTeam,
-  EnhancedChampion,
   GameDifficulty,
   ScoreCapReason,
   ScoreCapResult,
+  StrategicStats,
   TeamArchetype,
   TeamMetrics,
   TeamScore,
 } from "../types/game";
-import { applyItemsToChampion } from "./buildEngine";
 import { calculateRoleFit } from "./roleEngine";
 
 const clamp = (value: number, min = 0, max = 100) =>
   Math.round(Math.max(min, Math.min(max, value)));
 
 const average = (values: number[]) =>
-  values.length ? values.reduce((total, value) => total + value, 0) / values.length : 0;
+  values.length
+    ? values.reduce((total, value) => total + value, 0) / values.length
+    : 0;
 
-const enhanceTeam = (team: DraftTeam): EnhancedChampion[] =>
-  team.map((build) => applyItemsToChampion(build.champion, build.items));
+const statsFor = (team: DraftTeam): StrategicStats[] =>
+  team.map((build) => build.champion.stats);
 
 const calculateMetrics = (
   team: DraftTeam,
-  enhanced: EnhancedChampion[],
   difficulty: GameDifficulty,
 ): TeamMetrics => {
-  const carry = enhanced[team.findIndex((build) => build.role === "Carry")];
+  const stats = statsFor(team);
   const roleFits = team.map((build) =>
     calculateRoleFit(build.champion, build.role, difficulty),
   );
   const roleFit = clamp(average(roleFits.map((fit) => fit.score)));
   const roleDeficit = 100 - roleFit;
+  const carryIndex = team.findIndex((build) => build.role === "Carry");
   const jungleIndex = team.findIndex((build) => build.role === "Jungle");
-  const jungleRoleFit = jungleIndex >= 0 ? roleFits[jungleIndex].score : 100;
-  const physicalDamage = clamp(
-    average(enhanced.map((champion) => champion.enhancedStats.damageAD)),
-  );
-  const magicDamage = clamp(
-    average(enhanced.map((champion) => champion.enhancedStats.damageAP)),
-  );
-  const frontlineCandidates = enhanced.filter(
-    (champion) =>
+  const carry = carryIndex >= 0 ? stats[carryIndex] : undefined;
+  const jungleFit = jungleIndex >= 0 ? roleFits[jungleIndex].score : 100;
+  const physicalDamage = clamp(average(stats.map((entry) => entry.damageAD)));
+  const magicDamage = clamp(average(stats.map((entry) => entry.damageAP)));
+  const frontlineCandidates = team.filter(
+    ({ champion }) =>
       champion.classes.includes("Tank") ||
       champion.classes.includes("Engager") ||
-      champion.enhancedStats.tankiness >= 62,
+      champion.stats.tankiness >= 62,
   );
   const frontline = clamp(
-    frontlineCandidates.length * 29 +
-      average(frontlineCandidates.map((champion) => champion.enhancedStats.tankiness)) * 0.35,
+    frontlineCandidates.length * 28 +
+      average(
+        frontlineCandidates.map(({ champion }) => champion.stats.tankiness),
+      ) *
+        0.34,
   );
+  const engage = clamp(average(stats.map((entry) => entry.engage)));
+  const peel = clamp(
+    average(stats.map((entry) => entry.peel)) +
+      ((carry?.scaling ?? 0) >= 70 ? 4 : 0),
+  );
+  const crowdControl = clamp(
+    average(stats.map((entry) => entry.crowdControl)),
+  );
+  const scaling = clamp(average(stats.map((entry) => entry.scaling)));
+  const earlyGame = clamp(
+    average(stats.map((entry) => entry.earlyPressure)) - roleDeficit * 0.3,
+  );
+  const objectiveControl = clamp(
+    average(stats.map((entry) => entry.objectiveControl)) -
+      (100 - jungleFit) * 0.34 -
+      roleDeficit * 0.08,
+  );
+  const teamFight = clamp(average(stats.map((entry) => entry.teamFight)));
+  const pickoff = clamp(average(stats.map((entry) => entry.pickoff)));
+  const splitPush = clamp(average(stats.map((entry) => entry.splitPush)));
+  const waveClear = clamp(average(stats.map((entry) => entry.waveClear)));
+  const flexibility = average(
+    team.map(({ champion }) => Math.min(100, 50 + champion.roles.length * 14)),
+  );
+  const planCoherence = average([
+    Math.max(teamFight, pickoff, splitPush, waveClear),
+    Math.max(engage, peel),
+    objectiveControl,
+    roleFit,
+  ]);
 
   return {
     physicalDamage,
     magicDamage,
     frontline,
-    engage: clamp(average(enhanced.map((champion) => champion.enhancedStats.engage))),
-    peel: clamp(
-      average(enhanced.map((champion) => champion.enhancedStats.peel)) +
-        ((carry?.enhancedStats.scaling ?? 0) >= 70 ? 4 : 0),
-    ),
-    crowdControl: clamp(average(enhanced.map((champion) => champion.enhancedStats.crowdControl))),
-    scaling: clamp(average(enhanced.map((champion) => champion.enhancedStats.scaling))),
-    earlyGame: clamp(
-      average(enhanced.map((champion) => champion.enhancedStats.earlyPressure)) -
-        roleDeficit * 0.28,
-    ),
-    objectiveControl: clamp(
-      average(enhanced.map((champion) => champion.enhancedStats.objectiveControl)) -
-        (100 - jungleRoleFit) * 0.34 -
-        roleDeficit * 0.08,
-    ),
-    itemization: clamp(average(enhanced.map((champion) => champion.buildScore.total))),
+    engage,
+    peel,
+    crowdControl,
+    scaling,
+    earlyGame,
+    objectiveControl,
+    cardSynergy: clamp(planCoherence * 0.72 + 18),
+    rulesAdaptation: clamp(flexibility * 0.55 + roleFit * 0.45),
     consistency: clamp(
-      average(enhanced.map((champion) => champion.buildScore.consistency)) -
-        roleDeficit * 0.42,
+      average([
+        roleFit,
+        objectiveControl,
+        Math.max(frontline, peel),
+        100 - Math.abs(physicalDamage - magicDamage) * 0.55,
+      ]) - roleDeficit * 0.2,
     ),
     executionDifficulty: clamp(
-      average(enhanced.map((champion) => champion.difficulty * 10)) * 0.72 +
+      average(team.map(({ champion }) => champion.difficulty * 10)) * 0.7 +
         (frontline < 35 ? 10 : 0) +
-        (Math.min(physicalDamage, magicDamage) < 25 ? 6 : 0) +
+        (Math.min(physicalDamage, magicDamage) < 24 ? 6 : 0) +
         roleDeficit * 0.45,
     ),
-    teamFight: clamp(average(enhanced.map((champion) => champion.enhancedStats.teamFight))),
-    pickoff: clamp(average(enhanced.map((champion) => champion.enhancedStats.pickoff))),
-    splitPush: clamp(average(enhanced.map((champion) => champion.enhancedStats.splitPush))),
-    waveClear: clamp(average(enhanced.map((champion) => champion.enhancedStats.waveClear))),
+    teamFight,
+    pickoff,
+    splitPush,
+    waveClear,
     roleFit,
   };
 };
-
-export function calculateSynergyBonus(
-  team: DraftTeam,
-  difficulty: GameDifficulty = "Classic",
-): number {
-  const enhanced = enhanceTeam(team);
-  if (!enhanced.length) return 0;
-  const metrics = calculateMetrics(team, enhanced, difficulty);
-  let bonus = 0;
-
-  if (metrics.physicalDamage >= 35 && metrics.magicDamage >= 35) bonus += 6;
-  if (metrics.frontline >= 48) bonus += 5;
-  if (metrics.engage >= 52 && metrics.teamFight >= 58) bonus += 4;
-  if (metrics.peel >= 50 && metrics.scaling >= 60) bonus += 4;
-  if (metrics.objectiveControl >= 55) bonus += 3;
-  if (metrics.itemization >= 78) bonus += 5;
-  if (metrics.frontline < 25) bonus -= 7;
-  if (Math.min(metrics.physicalDamage, metrics.magicDamage) < 20) bonus -= 5;
-  if (metrics.itemization < 55) bonus -= 7;
-  if (metrics.roleFit < 75) bonus -= 8;
-  else if (metrics.roleFit < 88) bonus -= 3;
-
-  return Math.round(bonus);
-}
 
 const archetypeScores = (metrics: TeamMetrics) => ({
   "Team Fight":
@@ -122,8 +124,8 @@ const archetypeScores = (metrics: TeamMetrics) => ({
   Pickoff:
     metrics.pickoff * 0.5 +
     metrics.engage * 0.16 +
-    (100 - metrics.teamFight) * 0.08 +
-    metrics.earlyGame * 0.12,
+    metrics.earlyGame * 0.12 +
+    (100 - metrics.teamFight) * 0.08,
   "Split Push":
     metrics.splitPush * 0.58 +
     metrics.objectiveControl * 0.18 +
@@ -161,95 +163,41 @@ export function detectTeamArchetype(
   team: DraftTeam,
   difficulty: GameDifficulty = "Classic",
 ): TeamArchetype {
-  const enhanced = enhanceTeam(team);
-  const metrics = calculateMetrics(team, enhanced, difficulty);
-  const scores = archetypeScores(metrics);
-  return (Object.entries(scores) as [TeamArchetype, number][]).sort(
-    ([, left], [, right]) => right - left,
-  )[0][0];
+  const metrics = calculateMetrics(team, difficulty);
+  return (
+    Object.entries(archetypeScores(metrics)) as [TeamArchetype, number][]
+  ).sort(([, left], [, right]) => right - left)[0][0];
 }
 
-const determineStrengths = (metrics: TeamMetrics) => {
-  const strengths: string[] = [];
-  if (metrics.physicalDamage >= 38 && metrics.magicDamage >= 38) {
-    strengths.push("Bom equilíbrio entre dano físico e mágico");
-  }
-  if (metrics.frontline >= 55) strengths.push("Linha de frente confiável para lutas longas");
-  if (metrics.engage >= 58) strengths.push("Ferramentas claras para iniciar lutas");
-  if (metrics.peel >= 56) strengths.push("Boa proteção para os carregadores");
-  if (metrics.scaling >= 65) strengths.push("Curva de poder forte no fim do jogo");
-  if (metrics.earlyGame >= 63) strengths.push("Pressão alta nas primeiras partidas");
-  if (metrics.objectiveControl >= 60) strengths.push("Bom controle de objetivos e mapa");
-  if (metrics.itemization >= 78) strengths.push("Builds coerentes com os campeões");
-  if (metrics.roleFit >= 92) strengths.push("Campeões bem encaixados em suas posições");
-  return strengths.slice(0, 5);
-};
-
-const determineWeaknesses = (metrics: TeamMetrics) => {
-  const weaknesses: string[] = [];
-  if (metrics.frontline < 38) weaknesses.push("Pouca linha de frente para absorver pressão");
-  if (metrics.engage < 38) weaknesses.push("Dificuldade para começar lutas favoráveis");
-  if (metrics.peel < 36) weaknesses.push("Carregadores expostos a ameaças móveis");
-  if (Math.min(metrics.physicalDamage, metrics.magicDamage) < 25) {
-    weaknesses.push("Perfil de dano previsível e fácil de defender");
-  }
-  if (metrics.earlyGame < 42) weaknesses.push("Início lento e vulnerável a snowball");
-  if (metrics.scaling < 45) weaknesses.push("Perde força se a campanha se alongar");
-  if (metrics.itemization < 62) weaknesses.push("Itens pouco alinhados com o plano do draft");
-  if (metrics.roleFit < 75) {
-    weaknesses.push("Escolhas fora de rota reduziram a clareza da composição");
-  }
-  if (metrics.executionDifficulty >= 72) weaknesses.push("Execução exigente e pouco consistente");
-  return weaknesses.slice(0, 5);
-};
-
-const determineWinCondition = (archetype: TeamArchetype) => {
-  const conditions: Record<TeamArchetype, string> = {
-    "Team Fight": "forçar lutas 5v5 com iniciação coordenada",
-    Pickoff: "controlar visão e eliminar alvos isolados",
-    "Split Push": "abrir o mapa com pressão lateral constante",
-    Poke: "desgastar o inimigo antes de disputar objetivos",
-    "Protect the Carry": "proteger o principal carregador durante lutas longas",
-    "Early Snowball": "criar vantagem cedo e acelerar os objetivos",
-    Scaling: "sobreviver ao início e alcançar os picos tardios",
-    Balanced: "adaptar o ritmo e vencer pela consistência",
-  };
-  return conditions[archetype];
-};
-
-const roleLevelLabel = {
-  Natural: "Natural",
-  Flex: "Flexível",
-  OffMeta: "Fora do meta",
-  Bad: "Ruim",
-  Terrible: "Péssimo",
-} as const;
-
-const teamScoreWeights = {
-  roleFit: 0.14,
-  championStrength: 0.08,
-  itemizationQuality: 0.17,
-  buildCoherence: 0.11,
-  damageProfile: 0.09,
-  frontlineAndDurability: 0.07,
-  engageOrAlternativePlan: 0.08,
-  peelAndCarryProtection: 0.06,
-  objectiveControl: 0.06,
-  waveClearAndMapControl: 0.05,
-  winConditionClarity: 0.09,
-} as const;
+export function calculateSynergyBonus(
+  team: DraftTeam,
+  difficulty: GameDifficulty = "Classic",
+): number {
+  if (!team.length) return 0;
+  const metrics = calculateMetrics(team, difficulty);
+  let bonus = 0;
+  if (metrics.physicalDamage >= 35 && metrics.magicDamage >= 35) bonus += 6;
+  if (metrics.frontline >= 48) bonus += 5;
+  if (metrics.engage >= 52 && metrics.teamFight >= 58) bonus += 4;
+  if (metrics.peel >= 50 && metrics.scaling >= 60) bonus += 4;
+  if (metrics.objectiveControl >= 55) bonus += 3;
+  if (metrics.cardSynergy >= 75) bonus += 4;
+  if (metrics.frontline < 25) bonus -= 7;
+  if (Math.min(metrics.physicalDamage, metrics.magicDamage) < 20) bonus -= 5;
+  if (metrics.roleFit < 75) bonus -= 8;
+  else if (metrics.roleFit < 88) bonus -= 3;
+  return Math.round(bonus);
+}
 
 const calculateChampionStrength = (
   team: DraftTeam,
-  enhanced: EnhancedChampion[],
   difficulty: GameDifficulty,
 ) =>
   clamp(
     average(
-      team.map((build, index) => {
-        const champion = enhanced[index];
-        const stats = champion.enhancedStats;
-        const roleFit = calculateRoleFit(
+      team.map((build) => {
+        const stats = build.champion.stats;
+        const fit = calculateRoleFit(
           build.champion,
           build.role,
           difficulty,
@@ -280,20 +228,8 @@ const calculateChampionStrength = (
                       stats.crowdControl,
                       stats.utility,
                     ]);
-        return rolePower * 0.72 + roleFit * 0.28;
+        return rolePower * 0.72 + fit * 0.28;
       }),
-    ),
-  );
-
-const calculateBuildCoherence = (enhanced: EnhancedChampion[]) =>
-  clamp(
-    average(
-      enhanced.map(
-        (champion) =>
-          champion.buildScore.identityAlignment * 0.55 +
-          champion.buildScore.averageItemFit * 0.3 +
-          champion.buildScore.consistency * 0.15,
-      ),
     ),
   );
 
@@ -301,79 +237,60 @@ const calculateWinConditionClarity = (
   metrics: TeamMetrics,
   archetype: TeamArchetype,
 ) => {
-  const planScores: Record<TeamArchetype, number> = {
-    "Team Fight": average([
+  const plans: Record<TeamArchetype, number[]> = {
+    "Team Fight": [
       metrics.teamFight,
       metrics.engage,
       metrics.crowdControl,
       Math.max(metrics.frontline, metrics.peel),
-    ]),
-    Pickoff: average([
+    ],
+    Pickoff: [
       metrics.pickoff,
       metrics.earlyGame,
       metrics.crowdControl,
       metrics.objectiveControl,
-    ]),
-    "Split Push": average([
+    ],
+    "Split Push": [
       metrics.splitPush,
       metrics.waveClear,
       metrics.objectiveControl,
       metrics.earlyGame,
-    ]),
-    Poke: average([
+    ],
+    Poke: [
       metrics.waveClear,
       metrics.pickoff,
       metrics.peel,
       metrics.objectiveControl,
-    ]),
-    "Protect the Carry": average([
+    ],
+    "Protect the Carry": [
       metrics.peel,
       metrics.frontline,
       metrics.scaling,
       metrics.teamFight,
-    ]),
-    "Early Snowball": average([
+    ],
+    "Early Snowball": [
       metrics.earlyGame,
       metrics.pickoff,
       metrics.objectiveControl,
       metrics.engage,
-    ]),
-    Scaling: average([
+    ],
+    Scaling: [
       metrics.scaling,
       metrics.waveClear,
       Math.max(metrics.frontline, metrics.peel),
       metrics.teamFight,
-    ]),
-    Balanced: average([
+    ],
+    Balanced: [
       metrics.consistency,
       metrics.roleFit,
-      metrics.itemization,
+      metrics.rulesAdaptation,
       metrics.objectiveControl,
-    ]),
+    ],
   };
-  const damageReliability = clamp(
-    Math.max(metrics.physicalDamage, metrics.magicDamage) * 1.25,
+  return clamp(
+    average(plans[archetype]) * 0.82 +
+      Math.max(metrics.physicalDamage, metrics.magicDamage) * 0.22,
   );
-  let clarity = planScores[archetype] * 0.78 + damageReliability * 0.22;
-  if (
-    archetype === "Scaling" &&
-    Math.max(metrics.frontline, metrics.peel) < 40
-  ) {
-    clarity -= 20;
-  }
-  if (
-    archetype === "Protect the Carry" &&
-    (metrics.frontline < 42 || metrics.peel < 48)
-  ) {
-    clarity -= 16;
-  }
-  if (
-    archetype === "Early Snowball" &&
-    Math.max(metrics.engage, metrics.pickoff) < 48
-  ) {
-    clarity -= 15;
-  }
-  return clamp(clarity);
 };
 
 const addCap = (
@@ -390,166 +307,94 @@ export function calculateDraftScoreCap(
   baseScore: number,
   difficulty: GameDifficulty = "Classic",
 ): ScoreCapResult {
-  const enhanced = enhanceTeam(team);
-  const metrics = calculateMetrics(team, enhanced, difficulty);
-  const archetype = (
-    Object.entries(archetypeScores(metrics)) as [TeamArchetype, number][]
-  ).sort(([, left], [, right]) => right - left)[0][0];
-  const winConditionClarity = calculateWinConditionClarity(metrics, archetype);
-  const roleFits = team.map((build) =>
-    calculateRoleFit(build.champion, build.role, difficulty),
-  );
-  const offRoleCount = roleFits.filter((fit) => fit.score < 85).length;
-  const carryIndex = team.findIndex((build) => build.role === "Carry");
-  const jungleIndex = team.findIndex((build) => build.role === "Jungle");
-  const carryBuild =
-    carryIndex >= 0 ? enhanced[carryIndex].buildScore.total : 0;
-  const jungleRoleFit =
-    jungleIndex >= 0 ? roleFits[jungleIndex].score : 0;
-  const itemStats = team.flatMap((build) => build.items);
-  const antiTank = itemStats.reduce(
-    (total, item) =>
-      total +
-      (item.stats.antiTank ?? 0) +
-      (item.stats.armorPen ?? 0) * 0.5 +
-      (item.stats.magicPen ?? 0) * 0.5,
-    0,
-  );
-  const snowball = itemStats.reduce(
-    (total, item) =>
-      total +
-      (item.stats.snowball ?? 0) +
-      (item.stats.earlyPressure ?? 0),
-    0,
-  );
-  const reliableDamage =
-    Math.max(metrics.physicalDamage, metrics.magicDamage) >= 34 &&
-    carryBuild >= 42;
+  const metrics = calculateMetrics(team, difficulty);
+  const archetype = detectTeamArchetype(team, difficulty);
+  const clarity = calculateWinConditionClarity(metrics, archetype);
+  const offRoleCount = team.filter(
+    (build) =>
+      calculateRoleFit(build.champion, build.role, difficulty).score < 85,
+  ).length;
   const alternativePlan = Math.max(
     metrics.waveClear,
     metrics.splitPush,
     metrics.pickoff,
   );
-  const fullAD =
-    metrics.physicalDamage - metrics.magicDamage >= 32;
-  const fullAP =
-    metrics.magicDamage - metrics.physicalDamage >= 32;
   const reasons: ScoreCapReason[] = [];
 
-  addCap(
-    reasons,
-    45,
-    "A nota foi limitada porque a composição não tem uma fonte confiável de dano.",
-    !reliableDamage,
-  );
-  addCap(
-    reasons,
-    55,
-    "A nota foi limitada porque a composição não apresenta uma condição de vitória clara.",
-    winConditionClarity < 45,
-  );
-  addCap(
-    reasons,
-    60,
-    "A nota foi limitada porque o Carry está mal itemizado para uma composição que depende de proteção.",
-    archetype === "Protect the Carry" && carryBuild < 50,
-  );
-  addCap(
-    reasons,
-    65,
-    "A nota foi limitada porque a Jungle não oferece encaixe, pressão ou controle de objetivos confiável.",
-    jungleRoleFit < 45 || metrics.objectiveControl < 30,
-  );
-  addCap(
-    reasons,
-    55,
-    "A nota foi limitada porque três ou mais campeões estão fora de posição.",
-    offRoleCount >= 3,
-  );
-  addCap(
-    reasons,
-    68,
-    "A nota foi limitada porque o dano é quase todo físico sem anti-tank ou snowball suficiente.",
-    fullAD && antiTank < 35 && snowball < 45,
-  );
-  addCap(
-    reasons,
-    68,
-    "A nota foi limitada porque o dano é quase todo mágico sem controle suficiente.",
-    fullAP && metrics.crowdControl < 52,
-  );
-  addCap(
-    reasons,
-    62,
-    "A nota foi limitada porque falta frontline e também não existe um plano forte de poke, pickoff ou split push.",
-    metrics.frontline < 30 && alternativePlan < 58,
-  );
-  addCap(
-    reasons,
-    58,
-    "A nota foi limitada porque o time reúne campeões frágeis sem frontline, engage ou proteção suficientes.",
-    metrics.frontline < 18 &&
-      metrics.engage < 35 &&
-      metrics.peel < 40 &&
-      metrics.waveClear < 72 &&
-      metrics.pickoff < 68 &&
-      metrics.splitPush < 65,
-  );
-  addCap(
-    reasons,
-    65,
-    "A nota foi limitada porque falta engage e não há um plano alternativo claro.",
-    metrics.engage < 30 && alternativePlan < 58,
-  );
-  addCap(
-    reasons,
-    70,
-    "A nota foi limitada porque a composição tem wave clear insuficiente.",
-    metrics.waveClear < 34,
-  );
-  addCap(
-    reasons,
-    60,
-    "A nota foi limitada porque a itemização média ficou abaixo de 45.",
-    metrics.itemization < 45,
-  );
-  addCap(
-    reasons,
-    48,
-    "A nota foi limitada porque a itemização média ficou abaixo de 30.",
-    metrics.itemization < 30,
-  );
+  addCap(reasons, 48, "A composição não tem uma fonte confiável de dano.", Math.max(metrics.physicalDamage, metrics.magicDamage) < 34);
+  addCap(reasons, 58, "A composição não apresenta uma condição de vitória clara.", clarity < 45);
+  addCap(reasons, 57, "Três ou mais campeões estão fora de posição.", offRoleCount >= 3);
+  addCap(reasons, 70, "O perfil de dano é quase totalmente físico.", metrics.physicalDamage - metrics.magicDamage >= 34);
+  addCap(reasons, 70, "O perfil de dano é quase totalmente mágico.", metrics.magicDamage - metrics.physicalDamage >= 34);
+  addCap(reasons, 64, "Falta frontline e também não existe um plano alternativo forte.", metrics.frontline < 30 && alternativePlan < 58);
+  addCap(reasons, 60, "O time é frágil e não tem engage ou proteção suficientes.", metrics.frontline < 18 && metrics.engage < 35 && metrics.peel < 40);
+  addCap(reasons, 67, "Falta engage e não há plano alternativo claro.", metrics.engage < 30 && alternativePlan < 58);
+  addCap(reasons, 72, "A composição tem wave clear insuficiente.", metrics.waveClear < 34);
+  addCap(reasons, 66, "A Jungle não oferece controle de objetivos confiável.", metrics.objectiveControl < 30);
 
-  const finalCap = Math.min(
-    100,
-    baseScore,
-    ...reasons.map((entry) => entry.cap),
-  );
   return {
-    finalCap,
+    finalCap: Math.min(100, baseScore, ...reasons.map((entry) => entry.cap)),
     reasons: reasons.sort((left, right) => left.cap - right.cap),
   };
 }
+
+const determineStrengths = (metrics: TeamMetrics) => {
+  const strengths: string[] = [];
+  if (metrics.physicalDamage >= 38 && metrics.magicDamage >= 38) strengths.push("Bom equilíbrio entre dano físico e mágico");
+  if (metrics.frontline >= 55) strengths.push("Linha de frente confiável para lutas longas");
+  if (metrics.engage >= 58) strengths.push("Ferramentas claras para iniciar lutas");
+  if (metrics.peel >= 56) strengths.push("Boa proteção para os carregadores");
+  if (metrics.scaling >= 65) strengths.push("Curva de poder forte no fim do jogo");
+  if (metrics.earlyGame >= 63) strengths.push("Pressão alta nas primeiras rotações");
+  if (metrics.objectiveControl >= 60) strengths.push("Bom controle de objetivos e mapa");
+  if (metrics.roleFit >= 92) strengths.push("Campeões bem encaixados em suas posições");
+  return strengths.slice(0, 5);
+};
+
+const determineWeaknesses = (metrics: TeamMetrics) => {
+  const weaknesses: string[] = [];
+  if (metrics.frontline < 38) weaknesses.push("Pouca linha de frente para absorver pressão");
+  if (metrics.engage < 38) weaknesses.push("Dificuldade para começar lutas favoráveis");
+  if (metrics.peel < 36) weaknesses.push("Carregadores expostos a ameaças móveis");
+  if (Math.min(metrics.physicalDamage, metrics.magicDamage) < 25) weaknesses.push("Perfil de dano previsível e fácil de defender");
+  if (metrics.earlyGame < 42) weaknesses.push("Início lento e vulnerável a snowball");
+  if (metrics.scaling < 45) weaknesses.push("Perde força se a campanha se alongar");
+  if (metrics.roleFit < 75) weaknesses.push("Escolhas fora de rota reduziram a clareza da composição");
+  if (metrics.executionDifficulty >= 72) weaknesses.push("Execução exigente e pouco consistente");
+  return weaknesses.slice(0, 5);
+};
+
+const winConditions: Record<TeamArchetype, string> = {
+  "Team Fight": "forçar lutas 5v5 com iniciação coordenada",
+  Pickoff: "controlar visão e eliminar alvos isolados",
+  "Split Push": "abrir o mapa com pressão lateral constante",
+  Poke: "desgastar o inimigo antes de disputar objetivos",
+  "Protect the Carry": "proteger o principal carregador durante lutas longas",
+  "Early Snowball": "criar vantagem cedo e acelerar os objetivos",
+  Scaling: "sobreviver ao início e alcançar os picos tardios",
+  Balanced: "adaptar o ritmo e vencer pela consistência",
+};
+
+const roleLevelLabel = {
+  Natural: "Natural",
+  Flex: "Flexível",
+  OffMeta: "Fora do meta",
+  Bad: "Ruim",
+  Terrible: "Péssimo",
+} as const;
 
 export function calculateTeamScore(
   team: DraftTeam,
   difficulty: GameDifficulty = "Classic",
 ): TeamScore {
-  const enhanced = enhanceTeam(team);
-  const metrics = calculateMetrics(team, enhanced, difficulty);
+  const metrics = calculateMetrics(team, difficulty);
   const archetype = detectTeamArchetype(team, difficulty);
   const synergyBonus = calculateSynergyBonus(team, difficulty);
-  const damageBalance = clamp(100 - Math.abs(metrics.physicalDamage - metrics.magicDamage));
-  const championStrength = calculateChampionStrength(
-    team,
-    enhanced,
-    difficulty,
+  const damageBalance = clamp(
+    100 - Math.abs(metrics.physicalDamage - metrics.magicDamage),
   );
-  const buildCoherence = calculateBuildCoherence(enhanced);
-  const winConditionClarity = calculateWinConditionClarity(
-    metrics,
-    archetype,
-  );
+  const championStrength = calculateChampionStrength(team, difficulty);
+  const winConditionClarity = calculateWinConditionClarity(metrics, archetype);
   const alternativePlan = Math.max(
     metrics.engage,
     metrics.waveClear,
@@ -557,26 +402,20 @@ export function calculateTeamScore(
     metrics.splitPush,
   );
   const rawTotal = clamp(
-    metrics.roleFit * teamScoreWeights.roleFit +
-      championStrength * teamScoreWeights.championStrength +
-      metrics.itemization * teamScoreWeights.itemizationQuality +
-      buildCoherence * teamScoreWeights.buildCoherence +
-      damageBalance * teamScoreWeights.damageProfile +
-      metrics.frontline * teamScoreWeights.frontlineAndDurability +
-      alternativePlan * teamScoreWeights.engageOrAlternativePlan +
-      metrics.peel * teamScoreWeights.peelAndCarryProtection +
-      metrics.objectiveControl * teamScoreWeights.objectiveControl +
-      metrics.waveClear * teamScoreWeights.waveClearAndMapControl +
-      winConditionClarity * teamScoreWeights.winConditionClarity +
+    metrics.roleFit * 0.17 +
+      championStrength * 0.13 +
+      metrics.cardSynergy * 0.11 +
+      metrics.rulesAdaptation * 0.08 +
+      damageBalance * 0.08 +
+      metrics.frontline * 0.07 +
+      alternativePlan * 0.08 +
+      metrics.peel * 0.06 +
+      metrics.objectiveControl * 0.07 +
+      metrics.waveClear * 0.05 +
+      winConditionClarity * 0.1 +
       Math.max(-5, Math.min(4, synergyBonus * 0.45)),
   );
   const scoreCap = calculateDraftScoreCap(team, rawTotal, difficulty);
-  const total = Math.min(rawTotal, scoreCap.finalCap);
-  const itemWarnings = team.flatMap((build, index) =>
-    enhanced[index].buildScore.warnings.map(
-      (warning) => `${build.champion.name}: ${warning}`,
-    ),
-  );
   const roleWarnings = team.flatMap((build) => {
     const fit = calculateRoleFit(build.champion, build.role, difficulty);
     if (fit.score >= 85) return [];
@@ -586,14 +425,15 @@ export function calculateTeamScore(
   });
 
   return {
-    total,
+    total: Math.min(rawTotal, scoreCap.finalCap),
     rawTotal,
     scoreCap,
     archetype,
     metrics,
     synergyBonus,
     championStrength,
-    buildCoherence,
+    cardSynergy: metrics.cardSynergy,
+    rulesAdaptation: metrics.rulesAdaptation,
     damageBalance,
     winConditionClarity,
     strengths: determineStrengths(metrics),
@@ -601,8 +441,7 @@ export function calculateTeamScore(
     warnings: scoreCap.reasons
       .filter((entry) => entry.cap < rawTotal)
       .map((entry) => entry.reason),
-    itemWarnings: itemWarnings.slice(0, 6),
     roleWarnings,
-    winCondition: determineWinCondition(archetype),
+    winCondition: winConditions[archetype],
   };
 }

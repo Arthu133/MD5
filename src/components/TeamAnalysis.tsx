@@ -14,7 +14,8 @@ const metricLabels: [keyof TeamScore["metrics"], string][] = [
   ["scaling", "Scaling"],
   ["earlyGame", "Early game"],
   ["objectiveControl", "Objetivos"],
-  ["itemization", "Itemização"],
+  ["cardSynergy", "Sinergia das cartas"],
+  ["rulesAdaptation", "Adaptação às regras"],
   ["roleFit", "Encaixe nas posições"],
 ];
 
@@ -50,8 +51,8 @@ export function TeamAnalysis({ score }: TeamAnalysisProps) {
           <strong>{score.rawTotal}</strong>
         </div>
         <div>
-          <span>Coerência das builds</span>
-          <strong>{score.buildCoherence}</strong>
+          <span>Sinergia das cartas</span>
+          <strong>{score.cardSynergy}</strong>
         </div>
         <div>
           <span>Clareza da condição</span>

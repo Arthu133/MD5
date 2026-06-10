@@ -44,13 +44,13 @@ export function MatchHistory({ series }: MatchHistoryProps) {
               </div>
             </div>
             <div className="match-power">
-              <span>Meta / Draft / Itens</span>
+              <span>Meta / Draft / Adaptação</span>
               <strong>
                 {entry.enemy.metaRating}
                 <small> / </small>
                 {entry.enemy.draftCoherence}
                 <small> / </small>
-                {entry.enemy.itemizationQuality}
+                {entry.enemy.rulesAdaptation}
               </strong>
             </div>
             <div className="series-score">

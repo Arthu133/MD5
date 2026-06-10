@@ -6,7 +6,6 @@ import {
   tournamentDifficultyScaling,
 } from "../data/meta/competitiveMeta";
 import { enemyOrganizations } from "../data/meta/enemyOrganizations";
-import { items } from "../data/items";
 import type {
   ChampionMetaProfile,
   ChampionMetaRoleProfile,
@@ -19,7 +18,6 @@ import type {
   EnemyTier,
   GameDifficulty,
   Item,
-  ItemCategory,
   MetaPlaystyle,
   MetaTier,
   Role,
@@ -28,8 +26,6 @@ import type {
   TournamentStage,
 } from "../types/game";
 import { ROLES } from "../types/game";
-import { calculateBuildScore } from "./buildEngine";
-import { calculateItemFit } from "./itemEngine";
 import { calculateRoleFit } from "./roleEngine";
 import { calculateTeamScore } from "./synergyEngine";
 
@@ -45,9 +41,8 @@ const weightedPick = <T,>(
   candidates: T[],
   getWeight: (candidate: T) => number,
 ): T => {
-  const weights = candidates.map((candidate) => Math.max(0.01, getWeight(candidate)));
-  const total = weights.reduce((sum, weight) => sum + weight, 0);
-  let cursor = Math.random() * total;
+  const weights = candidates.map((entry) => Math.max(0.01, getWeight(entry)));
+  let cursor = Math.random() * weights.reduce((sum, value) => sum + value, 0);
   for (let index = 0; index < candidates.length; index += 1) {
     cursor -= weights[index];
     if (cursor <= 0) return candidates[index];
@@ -66,10 +61,7 @@ const archetypePlaystyles: Record<TeamArchetype, MetaPlaystyle[]> = {
   Balanced: ["FrontToBack", "ObjectiveStacking", "ControlMid"],
 };
 
-const fallbackTier = (
-  champion: ChampionProfile,
-  role: Role,
-): MetaTier => {
+const fallbackTier = (champion: ChampionProfile, role: Role): MetaTier => {
   const roleFit = calculateRoleFit(champion, role, "Classic").score;
   if (roleFit >= 95 && champion.difficulty <= 7) return "B";
   if (roleFit >= 85) return "C";
@@ -82,7 +74,6 @@ export const getChampionMetaRoleProfile = (
 ): ChampionMetaRoleProfile => {
   const curated = competitiveMetaByChampion.get(champion.id)?.roles[role];
   if (curated) return curated;
-
   const tier = fallbackTier(champion, role);
   const roleFit = calculateRoleFit(champion, role, "Classic").score;
   const base = tier === "B" ? 61 : tier === "C" ? 43 : 18;
@@ -100,10 +91,8 @@ export const getChampionMetaRoleProfile = (
 const getMetaProfile = (
   champion: ChampionProfile,
   role: Role,
-): ChampionMetaProfile => {
-  const curated = competitiveMetaByChampion.get(champion.id);
-  if (curated) return curated;
-  return {
+): ChampionMetaProfile =>
+  competitiveMetaByChampion.get(champion.id) ?? {
     championId: champion.id,
     championName: champion.name,
     roles: { [role]: getChampionMetaRoleProfile(champion, role) },
@@ -114,7 +103,6 @@ const getMetaProfile = (
     badAgainstArchetypes: [],
     defaultBuildArchetypes: [],
   };
-};
 
 export function getMetaWeightedChampionForRole(
   role: Role,
@@ -128,15 +116,13 @@ export function getMetaWeightedChampionForRole(
       !alreadyPickedChampionIds.includes(champion.id),
   );
   const desiredStyles = archetypePlaystyles[desiredArchetype];
-
   return weightedPick(candidates, (champion) => {
     const roleMeta = getChampionMetaRoleProfile(champion, role);
     const meta = getMetaProfile(champion, role);
-    const tierWeight = tierWeights[roleMeta.tier];
     const styleMatches = meta.playstyles.filter((style) =>
       desiredStyles.includes(style),
     ).length;
-    const highDifficultyBias =
+    const difficultyBias =
       1 +
       (tournamentDifficulty / 100) *
         (roleMeta.tier === "S"
@@ -155,102 +141,22 @@ export function getMetaWeightedChampionForRole(
       roleMeta.earlyGameReliability * 0.1;
     return Math.max(
       0.05,
-      tierWeight *
-        highDifficultyBias *
+      tierWeights[roleMeta.tier] *
+        difficultyBias *
         (1 + styleMatches * 0.42) *
         (0.55 + competitiveValue / 100),
     );
   });
 }
 
-const templateCategoriesByRole: Record<
-  Role,
-  Partial<Record<TeamArchetype, ItemCategory[]>>
-> = {
-  Top: {
-    "Team Fight": ["Tank", "Engage", "AntiBurst"],
-    Pickoff: ["Bruiser", "Mobility", "Engage"],
-    "Split Push": ["Bruiser", "SplitPush", "Sustain"],
-    Poke: ["Tank", "AntiBurst", "Utility"],
-    "Protect the Carry": ["Tank", "Peel", "Engage"],
-    "Early Snowball": ["Bruiser", "EarlyGame", "Sustain"],
-    Scaling: ["Tank", "Scaling", "Engage"],
-    Balanced: ["Bruiser", "Tank", "Sustain"],
-  },
-  Jungle: {
-    "Team Fight": ["Engage", "Tank", "ObjectiveControl"],
-    Pickoff: ["Assassin", "Mobility", "ObjectiveControl"],
-    "Split Push": ["Bruiser", "ObjectiveControl", "Mobility"],
-    Poke: ["Controller", "ObjectiveControl", "Utility"],
-    "Protect the Carry": ["Tank", "Peel", "ObjectiveControl"],
-    "Early Snowball": ["EarlyGame", "ObjectiveControl", "Engage"],
-    Scaling: ["ObjectiveControl", "Scaling", "Tank"],
-    Balanced: ["ObjectiveControl", "Bruiser", "Engage"],
-  },
-  Mid: {
-    "Team Fight": ["AP", "Controller", "WaveClear"],
-    Pickoff: ["Assassin", "AP", "Mobility"],
-    "Split Push": ["AP", "SplitPush", "WaveClear"],
-    Poke: ["AP", "WaveClear", "Controller"],
-    "Protect the Carry": ["Controller", "Peel", "Utility"],
-    "Early Snowball": ["EarlyGame", "AP", "Mobility"],
-    Scaling: ["AP", "Scaling", "WaveClear"],
-    Balanced: ["AP", "Controller", "WaveClear"],
-  },
-  Carry: {
-    "Team Fight": ["Marksman", "Scaling", "AntiTank"],
-    Pickoff: ["Marksman", "Mobility", "AntiBurst"],
-    "Split Push": ["Marksman", "SplitPush", "Scaling"],
-    Poke: ["Marksman", "WaveClear", "Scaling"],
-    "Protect the Carry": ["Marksman", "Scaling", "AntiTank"],
-    "Early Snowball": ["Marksman", "EarlyGame", "ObjectiveControl"],
-    Scaling: ["Marksman", "Scaling", "AntiTank"],
-    Balanced: ["Marksman", "Scaling", "AntiBurst"],
-  },
-  Support: {
-    "Team Fight": ["Engage", "Tank", "Peel"],
-    Pickoff: ["Engage", "Controller", "Mobility"],
-    "Split Push": ["Utility", "Peel", "Mobility"],
-    Poke: ["Controller", "Peel", "Utility"],
-    "Protect the Carry": ["Enchanter", "Peel", "Utility"],
-    "Early Snowball": ["Engage", "EarlyGame", "ObjectiveControl"],
-    Scaling: ["Enchanter", "Peel", "Scaling"],
-    Balanced: ["Peel", "Engage", "Utility"],
-  },
-};
-
+// Mantido como adaptador para integrações antigas. Itens não participam mais do jogo.
 export function generateMetaBuildForChampion(
-  champion: ChampionProfile,
-  role: Role,
-  template: CompetitiveCompTemplate,
-  enemyDifficulty: number,
+  _champion: ChampionProfile,
+  _role: Role,
+  _template: CompetitiveCompTemplate,
+  _enemyDifficulty: number,
 ): Item[] {
-  const meta = getMetaProfile(champion, role);
-  const desiredCategories = [
-    ...(templateCategoriesByRole[role][template.archetype] ?? []),
-    ...meta.defaultBuildArchetypes,
-  ];
-  const scored = items.map((item) => {
-    const fit = calculateItemFit(champion, item).score;
-    const templateBonus = desiredCategories.includes(item.category) ? 24 : 0;
-    const roleBonus = item.bestFor.roles?.includes(role) ? 8 : 0;
-    const noise = (Math.random() - 0.5) * Math.max(2, 22 - enemyDifficulty * 0.2);
-    return { item, score: fit + templateBonus + roleBonus + noise };
-  });
-
-  const qualityPoolSize =
-    enemyDifficulty >= 85 ? 5 : enemyDifficulty >= 70 ? 8 : enemyDifficulty >= 55 ? 12 : 18;
-  const selected: Item[] = [];
-  const ranked = scored.sort((left, right) => right.score - left.score);
-
-  while (selected.length < 3) {
-    const pool = ranked
-      .filter(({ item }) => !selected.some((entry) => entry.id === item.id))
-      .slice(0, qualityPoolSize);
-    const picked = weightedPick(pool, ({ score }) => Math.max(1, score));
-    selected.push(picked.item);
-  }
-  return selected;
+  return [];
 }
 
 export function validateEnemyDraft(team: DraftTeam): DraftValidationResult {
@@ -262,43 +168,23 @@ export function validateEnemyDraft(team: DraftTeam): DraftValidationResult {
   const top = team.find((build) => build.role === "Top");
   const mid = team.find((build) => build.role === "Mid");
 
-  if (!jungle || calculateRoleFit(jungle.champion, "Jungle", "Classic").score < 85) {
-    problems.push("sem jungle funcional");
-  }
-  if (!carry || Math.max(carry.champion.stats.damageAD, carry.champion.stats.damageAP) < 58) {
-    problems.push("sem fonte real de dano no carry");
-  }
-  if (!support || Math.max(support.champion.stats.peel, support.champion.stats.engage, support.champion.stats.utility) < 50) {
-    problems.push("support sem função competitiva");
-  }
-  if (!top || (top.champion.classes.includes("Tank") && calculateBuildScore(top.champion, top.items).defensivePower < 25)) {
-    problems.push("top sem resistência suficiente");
-  }
-  if (!mid || mid.champion.stats.waveClear < 42) {
-    problems.push("mid com pouco wave clear");
-  }
-  if (score.metrics.frontline < 30 && ["Team Fight", "Scaling", "Protect the Carry"].includes(score.archetype)) {
-    problems.push("composição de luta sem frontline");
-  }
-  if (Math.min(score.metrics.physicalDamage, score.metrics.magicDamage) < 18) {
-    problems.push("perfil de dano extremamente previsível");
-  }
-  if (score.metrics.itemization < 62) {
-    problems.push("itemização incoerente");
-  }
-  if (score.metrics.earlyGame < 32 && score.metrics.scaling < 58) {
-    problems.push("sem pressão inicial ou escala confiável");
-  }
+  if (!jungle || calculateRoleFit(jungle.champion, "Jungle", "Classic").score < 85) problems.push("sem jungle funcional");
+  if (!carry || Math.max(carry.champion.stats.damageAD, carry.champion.stats.damageAP) < 58) problems.push("sem fonte real de dano no carry");
+  if (!support || Math.max(support.champion.stats.peel, support.champion.stats.engage, support.champion.stats.utility) < 50) problems.push("support sem função competitiva");
+  if (!top || top.champion.stats.tankiness < 30) problems.push("top sem resistência suficiente");
+  if (!mid || mid.champion.stats.waveClear < 42) problems.push("mid com pouco wave clear");
+  if (score.metrics.frontline < 30 && ["Team Fight", "Scaling", "Protect the Carry"].includes(score.archetype)) problems.push("composição de luta sem frontline");
+  if (Math.min(score.metrics.physicalDamage, score.metrics.magicDamage) < 18) problems.push("perfil de dano extremamente previsível");
+  if (score.metrics.earlyGame < 32 && score.metrics.scaling < 58) problems.push("sem pressão inicial ou escala confiável");
 
   const validationScore = clamp(
-    score.total * 0.45 +
-      score.metrics.itemization * 0.2 +
-      score.metrics.roleFit * 0.18 +
+    score.total * 0.5 +
+      score.metrics.roleFit * 0.2 +
       score.metrics.consistency * 0.12 +
-      Math.min(score.metrics.frontline, 70) * 0.05 -
+      score.metrics.rulesAdaptation * 0.1 +
+      Math.min(score.metrics.frontline, 70) * 0.08 -
       problems.length * 5,
   );
-
   return {
     valid: validationScore >= 55 && !problems.includes("sem jungle funcional"),
     score: validationScore,
@@ -328,13 +214,13 @@ const groupStrengthDifficultyModifier = {
 
 const validationThreshold: Record<TournamentStage, number> = {
   Groups: 55,
-  Quarterfinals: 70,
-  Semifinals: 80,
-  Final: 84,
+  Quarterfinals: 68,
+  Semifinals: 75,
+  Final: 80,
 };
 
-const counterTemplateIds = (userTeamScore: TeamScore): string[] => {
-  const metrics = userTeamScore.metrics;
+const counterTemplateIds = (score: TeamScore): string[] => {
+  const metrics = score.metrics;
   if (metrics.engage < 42) return ["poke-siege", "front-to-back-scaling"];
   if (metrics.peel < 42) return ["dive-comp", "pick-comp"];
   if (metrics.frontline < 40) return ["dive-comp", "control-mage-teamfight"];
@@ -349,9 +235,10 @@ const pickTemplate = (
   userTeamScore: TeamScore,
   stage: TournamentStage,
 ) => {
-  const counters = stage === "Semifinals" || stage === "Final"
-    ? counterTemplateIds(userTeamScore)
-    : [];
+  const counters =
+    stage === "Semifinals" || stage === "Final"
+      ? counterTemplateIds(userTeamScore)
+      : [];
   const preferred = competitiveCompTemplates.filter(
     (template) =>
       organization.preferredTemplates.includes(template.id) ||
@@ -368,7 +255,7 @@ const pickTemplate = (
 
 const pickOrganization = (
   stage: TournamentStage,
-  excludedOrganizationIds: string[],
+  excludedIds: string[],
   groupStrength?: "weak" | "medium" | "strong",
 ) => {
   let tiers = stageTierPool[stage];
@@ -383,30 +270,16 @@ const pickOrganization = (
   const candidates = enemyOrganizations.filter(
     (organization) =>
       tiers.includes(organization.tier) &&
-      !excludedOrganizationIds.includes(organization.id),
+      !excludedIds.includes(organization.id),
   );
-  return weightedPick(candidates, (organization) =>
-    organization.draftDiscipline +
-    organization.itemizationDiscipline +
-    organization.adaptability,
+  return weightedPick(
+    candidates.length ? candidates : enemyOrganizations.filter((entry) => tiers.includes(entry.tier)),
+    (organization) =>
+      organization.draftDiscipline +
+      organization.objectiveFocus +
+      organization.adaptability,
   );
 };
-
-const enemyModifiers = (
-  userTeamScore: TeamScore,
-  stage: TournamentStage,
-  organization: EnemyOrganizationProfile,
-) => ({
-  earlyPressure: Math.round(organization.aggression / 10),
-  scaling: Math.round(organization.scalingPreference / 10),
-  teamFight: Math.round(organization.draftDiscipline / 10),
-  pickoff: Math.round(organization.adaptability / 12),
-  objectiveControl: Math.round(organization.objectiveFocus / 9),
-  antiAD: userTeamScore.metrics.physicalDamage - userTeamScore.metrics.magicDamage > 28 ? stage === "Final" ? 10 : 7 : 3,
-  antiAP: userTeamScore.metrics.magicDamage - userTeamScore.metrics.physicalDamage > 28 ? stage === "Final" ? 10 : 7 : 3,
-  punishNoFrontline: stage === "Final" ? 12 : stage === "Semifinals" ? 10 : 7,
-  punishBadItems: stage === "Final" ? 12 : stage === "Semifinals" ? 10 : 7,
-});
 
 const buildEnemy = (
   organization: EnemyOrganizationProfile,
@@ -416,16 +289,14 @@ const buildEnemy = (
   difficulty: GameDifficulty,
   groupStrength?: "weak" | "medium" | "strong",
 ): CompetitiveEnemyTeam => {
-  const stageBonus = tournamentDifficultyScaling[difficulty].stages[stage];
   const organizationQuality = average([
     organization.draftDiscipline,
-    organization.itemizationDiscipline,
     organization.objectiveFocus,
     organization.adaptability,
   ]);
   const tournamentDifficulty = clamp(
     stageBaseDifficulty[stage] +
-      stageBonus +
+      tournamentDifficultyScaling[difficulty].stages[stage] +
       (organizationQuality - 75) * 0.25 +
       (stage === "Groups" && groupStrength
         ? groupStrengthDifficultyModifier[groupStrength]
@@ -440,16 +311,7 @@ const buildEnemy = (
       pickedIds,
     );
     pickedIds.push(champion.id);
-    return {
-      role,
-      champion,
-      items: generateMetaBuildForChampion(
-        champion,
-        role,
-        template,
-        tournamentDifficulty,
-      ),
-    };
+    return { role, champion, items: [] };
   });
   const validation = validateEnemyDraft(simulatedDraft);
   const generatedScore = calculateTeamScore(simulatedDraft, "Classic");
@@ -458,35 +320,36 @@ const buildEnemy = (
       simulatedDraft.map((build) =>
         getChampionMetaRoleProfile(build.champion, build.role).priority,
       ),
-    ) * 0.72 +
+    ) *
+      0.72 +
       organization.draftDiscipline * 0.28,
-  );
-  const itemizationQuality = clamp(
-    average(
-      simulatedDraft.map((build) =>
-        calculateBuildScore(build.champion, build.items).total,
-      ),
-    ) * 0.75 +
-      organization.itemizationDiscipline * 0.25,
   );
   const draftCoherence = clamp(
     validation.score * 0.58 +
       generatedScore.metrics.roleFit * 0.2 +
       organization.draftDiscipline * 0.22,
   );
-  const modifiers = enemyModifiers(userTeamScore, stage, organization);
+  const rulesAdaptation = clamp(
+    generatedScore.metrics.rulesAdaptation * 0.58 +
+      organization.adaptability * 0.42,
+  );
+  const modifiers = {
+    earlyPressure: Math.round(organization.aggression / 10),
+    scaling: Math.round(organization.scalingPreference / 10),
+    teamFight: Math.round(organization.draftDiscipline / 10),
+    pickoff: Math.round(organization.adaptability / 12),
+    objectiveControl: Math.round(organization.objectiveFocus / 9),
+    antiAD: userTeamScore.metrics.physicalDamage - userTeamScore.metrics.magicDamage > 28 ? stage === "Final" ? 10 : 7 : 3,
+    antiAP: userTeamScore.metrics.magicDamage - userTeamScore.metrics.physicalDamage > 28 ? stage === "Final" ? 10 : 7 : 3,
+    punishNoFrontline: stage === "Final" ? 12 : stage === "Semifinals" ? 10 : 7,
+    punishBadItems: 0,
+  };
   const punishProfile = {
     punishesNoFrontline: userTeamScore.metrics.frontline < 42,
     punishesLowPeel: userTeamScore.metrics.peel < 44,
-    punishesFullAD:
-      userTeamScore.metrics.physicalDamage -
-        userTeamScore.metrics.magicDamage >
-      28,
-    punishesFullAP:
-      userTeamScore.metrics.magicDamage -
-        userTeamScore.metrics.physicalDamage >
-      28,
-    punishesBadItems: userTeamScore.metrics.itemization < 68,
+    punishesFullAD: userTeamScore.metrics.physicalDamage - userTeamScore.metrics.magicDamage > 28,
+    punishesFullAP: userTeamScore.metrics.magicDamage - userTeamScore.metrics.physicalDamage > 28,
+    punishesBadItems: false,
     punishesLowWaveClear: userTeamScore.metrics.waveClear < 45,
     punishesNoEngage: userTeamScore.metrics.engage < 42,
     punishesLowScaling: userTeamScore.metrics.scaling < 48,
@@ -499,9 +362,9 @@ const buildEnemy = (
     stage,
     difficulty: clamp(
       tournamentDifficulty * 0.55 +
-        metaRating * 0.16 +
-        draftCoherence * 0.17 +
-        itemizationQuality * 0.12,
+        metaRating * 0.17 +
+        draftCoherence * 0.18 +
+        rulesAdaptation * 0.1,
       45,
       98,
     ),
@@ -513,7 +376,7 @@ const buildEnemy = (
     templateName: template.name,
     metaRating,
     draftCoherence,
-    itemizationQuality,
+    rulesAdaptation,
     simulatedDraft,
     winCondition: template.winCondition,
     mainThreat: template.strengths.slice(0, 2).join(" e "),
@@ -535,12 +398,10 @@ export function generateCounterMetaEnemy(
   );
   let bestEnemy: CompetitiveEnemyTeam | undefined;
   let bestValidationScore = -1;
-
   for (let attempt = 0; attempt < 12; attempt += 1) {
-    const template = pickTemplate(organization, userTeamScore, stage);
     const enemy = buildEnemy(
       organization,
-      template,
+      pickTemplate(organization, userTeamScore, stage),
       userTeamScore,
       stage,
       difficulty,
@@ -553,6 +414,5 @@ export function generateCounterMetaEnemy(
     }
     if (validation.score >= validationThreshold[stage]) return enemy;
   }
-
   return bestEnemy!;
 }
