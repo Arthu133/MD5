@@ -9,6 +9,11 @@ import { TeamAnalysis } from "./components/TeamAnalysis";
 import { DATA_DRAGON_VERSION } from "./data/champions/generatedChampions";
 import { getRandomChampionsForRole } from "./engine/draftEngine";
 import { getRandomItemsForChampion } from "./engine/itemEngine";
+import {
+  canUseRefresh,
+  consumeRefresh,
+  refreshByDifficulty,
+} from "./engine/refreshEngine";
 import { simulateCampaign } from "./engine/simulationEngine";
 import { calculateTeamScore } from "./engine/synergyEngine";
 import type {
@@ -33,6 +38,8 @@ function App() {
   const [itemOptions, setItemOptions] = useState<Item[]>([]);
   const [result, setResult] = useState<CampaignResult | null>(null);
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
+  const [refreshesRemaining, setRefreshesRemaining] = useState(0);
+  const [itemRefreshVersion, setItemRefreshVersion] = useState(0);
   const [simulationMode, setSimulationMode] =
     useState<SimulationMode>("Automatic");
   const [simulationSpeed, setSimulationSpeed] =
@@ -53,6 +60,8 @@ function App() {
     setSelectedChampion(null);
     setItemOptions([]);
     setResult(null);
+    setRefreshesRemaining(refreshByDifficulty[difficulty]);
+    setItemRefreshVersion(0);
     setChampionOptions(
       getRandomChampionsForRole(ROLES[0], [], 10, difficulty),
     );
@@ -63,6 +72,40 @@ function App() {
   const chooseChampion = (champion: ChampionProfile) => {
     setSelectedChampion(champion);
     setItemOptions(getRandomItemsForChampion(champion));
+  };
+
+  const refreshChampionOptions = () => {
+    if (!difficulty || !canUseRefresh(refreshesRemaining)) return;
+    const selectedIds = team.map((build) => build.champion.id);
+    const withoutCurrentOptions = [
+      ...selectedIds,
+      ...championOptions.map((champion) => champion.id),
+    ];
+    const refreshed = getRandomChampionsForRole(
+      currentRole,
+      withoutCurrentOptions,
+      10,
+      difficulty,
+    );
+    setChampionOptions(
+      refreshed.length === 10
+        ? refreshed
+        : getRandomChampionsForRole(currentRole, selectedIds, 10, difficulty),
+    );
+    setRefreshesRemaining(consumeRefresh);
+  };
+
+  const refreshItemOptions = () => {
+    if (!selectedChampion || !canUseRefresh(refreshesRemaining)) return;
+    setItemOptions(
+      getRandomItemsForChampion(
+        selectedChampion,
+        9,
+        itemOptions.map((item) => item.id),
+      ),
+    );
+    setItemRefreshVersion((version) => version + 1);
+    setRefreshesRemaining(consumeRefresh);
   };
 
   const confirmItems = (selectedItems: Item[]) => {
@@ -294,6 +337,16 @@ function App() {
                   </span>
                 ))}
               </div>
+              {!selectedChampion ? (
+                <button
+                  className="secondary-button refresh-button"
+                  type="button"
+                  disabled={!canUseRefresh(refreshesRemaining)}
+                  onClick={refreshChampionOptions}
+                >
+                  Atualizar opções ({refreshesRemaining})
+                </button>
+              ) : null}
             </div>
 
             {!selectedChampion ? (
@@ -310,10 +363,12 @@ function App() {
               </section>
             ) : (
               <ItemSelection
-                key={selectedChampion.id}
+                key={`${selectedChampion.id}-${itemRefreshVersion}`}
                 champion={selectedChampion}
                 difficulty={difficulty ?? "Classic"}
                 options={itemOptions}
+                refreshesRemaining={refreshesRemaining}
+                onRefresh={refreshItemOptions}
                 onConfirm={confirmItems}
               />
             )}

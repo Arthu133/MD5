@@ -11,6 +11,8 @@ type ItemSelectionProps = {
   champion: ChampionProfile;
   difficulty: GameDifficulty;
   options: Item[];
+  refreshesRemaining: number;
+  onRefresh: () => void;
   onConfirm: (items: Item[]) => void;
 };
 
@@ -18,6 +20,8 @@ export function ItemSelection({
   champion,
   difficulty,
   options,
+  refreshesRemaining,
+  onRefresh,
   onConfirm,
 }: ItemSelectionProps) {
   const [selected, setSelected] = useState<Item[]>([]);
@@ -49,9 +53,19 @@ export function ItemSelection({
             Leia os atributos e escolha os itens que reforçam sua função no draft.
           </p>
         </div>
-        <div className="selection-counter">
-          <strong>{selected.length}</strong>
-          <span>/ 3</span>
+        <div className="selection-heading__actions">
+          <div className="selection-counter">
+            <strong>{selected.length}</strong>
+            <span>/ 3</span>
+          </div>
+          <button
+            className="secondary-button refresh-button"
+            type="button"
+            disabled={refreshesRemaining === 0}
+            onClick={onRefresh}
+          >
+            Atualizar opções ({refreshesRemaining})
+          </button>
         </div>
       </div>
 

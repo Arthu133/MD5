@@ -142,7 +142,10 @@ export type ItemDisplayTag =
   | "SIEGE"
   | "SNOWBALL"
   | "COMEBACK"
-  | "TENACIDADE";
+  | "TENACIDADE"
+  | "EXECUÇÃO"
+  | "ARMADILHAS"
+  | "TEMPO";
 
 export type ItemStats = Partial<
   StrategicStats & {
@@ -171,6 +174,11 @@ export type ItemStats = Partial<
     snowball: number;
     comeback: number;
     tenacity: number;
+    execute: number;
+    shielding: number;
+    healing: number;
+    trapControl: number;
+    tempo: number;
   }
 >;
 

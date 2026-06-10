@@ -15,7 +15,10 @@ import {
   validateEnemyDraft,
 } from "./competitiveEnemyEngine";
 import { getRandomChampionsForRole } from "./draftEngine";
-import { calculateItemFit, getRandomItemsForChampion } from "./itemEngine";
+import {
+  calculateItemFit,
+  getRandomItemsForChampion,
+} from "./itemEngine";
 import {
   applyEventToStats,
   canDestroyNexus,
@@ -27,6 +30,11 @@ import {
   matchSimulationTimeBudgetMs,
 } from "./liveMatchEngine";
 import { calculateRoleFit } from "./roleEngine";
+import {
+  canUseRefresh,
+  consumeRefresh,
+  refreshByDifficulty,
+} from "./refreshEngine";
 import { simulateCampaign } from "./simulationEngine";
 import { calculateTeamScore } from "./synergyEngine";
 
@@ -69,7 +77,7 @@ const createTemplateTeam = (
 describe("MD5 engine", () => {
   it("mantem o catalogo completo e opcoes suficientes por posicao", () => {
     expect(generatedChampions.length).toBeGreaterThanOrEqual(170);
-    expect(items.length).toBeGreaterThanOrEqual(100);
+    expect(items.length).toBeGreaterThanOrEqual(150);
     ROLES.forEach((role) => {
       expect(
         championProfiles.filter((champion) => champion.roles.includes(role)).length,
@@ -107,11 +115,46 @@ describe("MD5 engine", () => {
   it("oferece nove itens unicos e variados", () => {
     const champion = getChampion("Ahri");
     const options = getRandomItemsForChampion(champion);
+    const scores = options.map((item) => calculateItemFit(champion, item).score);
     expect(options).toHaveLength(9);
     expect(new Set(options.map((item) => item.id)).size).toBe(9);
     expect(new Set(options.map((item) => item.category)).size).toBeGreaterThan(4);
+    expect(scores.filter((score) => score >= 75)).toHaveLength(4);
+    expect(scores.filter((score) => score >= 45 && score < 75)).toHaveLength(3);
+    expect(scores.filter((score) => score < 45)).toHaveLength(2);
     expect(options.every((item) => item.icon.endsWith(".svg"))).toBe(true);
     expect(options.every((item) => item.displayTags.length >= 3)).toBe(true);
+  });
+
+  it("mantem itens unicos em sorteios e evita a lista anterior no refresh", () => {
+    const champion = getChampion("Ahri");
+    Array.from({ length: 100 }).forEach(() => {
+      const options = getRandomItemsForChampion(champion);
+      expect(options).toHaveLength(9);
+      expect(new Set(options.map((item) => item.id)).size).toBe(9);
+    });
+
+    const firstOptions = getRandomItemsForChampion(champion);
+    const refreshedOptions = getRandomItemsForChampion(
+      champion,
+      9,
+      firstOptions.map((item) => item.id),
+    );
+    expect(
+      refreshedOptions.some((item) =>
+        firstOptions.some((previous) => previous.id === item.id),
+      ),
+    ).toBe(false);
+  });
+
+  it("compartilha e limita o saldo global de refresh por dificuldade", () => {
+    expect(refreshByDifficulty.Classic).toBe(3);
+    expect(refreshByDifficulty.Hard).toBe(1);
+    expect(canUseRefresh(1)).toBe(true);
+    expect(canUseRefresh(0)).toBe(false);
+    expect(consumeRefresh(3)).toBe(2);
+    expect(consumeRefresh(1)).toBe(0);
+    expect(consumeRefresh(0)).toBe(0);
   });
 
   it("valoriza AP para magos mais que critico puro", () => {

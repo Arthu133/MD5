@@ -430,7 +430,8 @@ strong {
   box-shadow: 0 14px 36px rgba(201, 148, 60, 0.3);
 }
 
-.primary-button:disabled {
+.primary-button:disabled,
+.secondary-button:disabled {
   cursor: not-allowed;
   opacity: 0.35;
   filter: grayscale(0.5);
@@ -931,6 +932,25 @@ strong {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 13px;
+}
+
+.refresh-button {
+  min-width: 190px;
+  white-space: nowrap;
+}
+
+.progress-header .refresh-button {
+  align-self: center;
+}
+
+.selection-heading .refresh-button {
+  align-self: center;
+}
+
+.selection-heading__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .champion-card {
@@ -4308,6 +4328,16 @@ strong {
   .champion-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+  }
+
+  .selection-heading__actions {
+    align-items: stretch;
+    flex-direction: column;
+    grid-column: 1 / -1;
+  }
+
+  .selection-heading__actions .refresh-button {
+    width: 100%;
   }
 
   .champion-card {

@@ -41,6 +41,7 @@ export function calculateBuildScore(
         (item.stats.magicPen ?? 0) / 2 +
         (item.stats.dps ?? 0) +
         (item.stats.antiTank ?? 0) / 2 +
+        (item.stats.execute ?? 0) / 1.5 +
         (item.stats.burst ?? 0),
       ),
     ),
@@ -55,7 +56,9 @@ export function calculateBuildScore(
         (item.stats.sustain ?? 0) / 2 +
         (item.stats.antiBurst ?? 0) +
         (item.stats.tenacity ?? 0) / 2 +
-        (item.stats.comeback ?? 0) / 3,
+        (item.stats.comeback ?? 0) / 3 +
+        (item.stats.healing ?? 0) / 2 +
+        (item.stats.shielding ?? 0) / 2,
       ),
     ),
   );
@@ -73,7 +76,9 @@ export function calculateBuildScore(
         (item.stats.roaming ?? 0) / 2 +
         (item.stats.disengage ?? 0) +
         (item.stats.siege ?? 0) / 2 +
-        (item.stats.snowball ?? 0) / 3,
+        (item.stats.snowball ?? 0) / 3 +
+        (item.stats.trapControl ?? 0) / 2 +
+        (item.stats.tempo ?? 0) / 2,
       ),
     ),
   );
@@ -164,15 +169,24 @@ export function applyItemsToChampion(
     enhancedStats.tankiness += (item.stats.magicResist ?? 0) / 5 * universalEfficiency;
     enhancedStats.utility += (item.stats.abilityHaste ?? 0) / 4 * universalEfficiency;
     enhancedStats.utility += (item.stats.healShieldPower ?? 0) / 2 * universalEfficiency;
+    enhancedStats.sustain += (item.stats.healing ?? 0) * 0.75 * universalEfficiency;
+    enhancedStats.peel += (item.stats.shielding ?? 0) * 0.75 * universalEfficiency;
     enhancedStats.utility += ((item.stats.antiHeal ?? 0) + (item.stats.antiShield ?? 0)) / 3 * universalEfficiency;
     enhancedStats.utility += (item.stats.visionControl ?? 0) * 0.7 * universalEfficiency;
     enhancedStats.objectiveControl += ((item.stats.visionControl ?? 0) + (item.stats.antiTank ?? 0) + (item.stats.siege ?? 0)) * 0.45 * efficiency;
     enhancedStats.mobility += (item.stats.roaming ?? 0) * 0.65 * efficiency;
     enhancedStats.earlyPressure += ((item.stats.roaming ?? 0) + (item.stats.snowball ?? 0)) * 0.55 * efficiency;
+    enhancedStats.earlyPressure += (item.stats.tempo ?? 0) * 0.45 * efficiency;
+    enhancedStats.objectiveControl += (item.stats.tempo ?? 0) * 0.35 * efficiency;
     enhancedStats.peel += (item.stats.disengage ?? 0) * 0.8 * universalEfficiency;
     enhancedStats.waveClear += (item.stats.siege ?? 0) * 0.45 * efficiency;
     enhancedStats.splitPush += (item.stats.siege ?? 0) * 0.55 * efficiency;
     enhancedStats.scaling += (item.stats.comeback ?? 0) * 0.6 * efficiency;
+    enhancedStats.burst += (item.stats.execute ?? 0) * 0.7 * efficiency;
+    enhancedStats.pickoff += (item.stats.execute ?? 0) * 0.45 * efficiency;
+    enhancedStats.crowdControl += (item.stats.trapControl ?? 0) * 0.55 * efficiency;
+    enhancedStats.pickoff += (item.stats.trapControl ?? 0) * 0.45 * efficiency;
+    enhancedStats.utility += (item.stats.trapControl ?? 0) * 0.35 * universalEfficiency;
     enhancedStats.tankiness += ((item.stats.antiBurst ?? 0) + (item.stats.tenacity ?? 0)) * 0.55 * universalEfficiency;
 
     const strategicKeys: (keyof StrategicStats)[] = [

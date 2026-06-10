@@ -8,6 +8,10 @@ import type {
 } from "../types/game";
 import { shuffle } from "./draftEngine";
 
+export function uniqueById<T extends { id: string }>(values: T[]): T[] {
+  return Array.from(new Map(values.map((value) => [value.id, value])).values());
+}
+
 const clamp = (value: number, min = 0, max = 100) =>
   Math.round(Math.max(min, Math.min(max, value)));
 
@@ -67,6 +71,10 @@ export function calculateItemFit(
   score += addReason(reasons, "Pressão lateral reforça o plano de split push.", champion.stats.splitPush >= 60 && Boolean(item.stats.splitPush || item.stats.siege || item.stats.sustain), 9);
   score += addReason(reasons, "Mobilidade e snowball ampliam janelas de pickoff.", champion.stats.pickoff >= 60 && Boolean(item.stats.mobility || item.stats.snowball || item.stats.roaming), 9);
   score += addReason(reasons, "Disengage e tenacidade ajudam a estabilizar lutas.", (preferences.prefersPeel || preferences.prefersTank) && Boolean(item.stats.disengage || item.stats.tenacity || item.stats.antiBurst), 8);
+  score += addReason(reasons, "Execução melhora a finalização de alvos frágeis.", champion.stats.burst >= 60 && Boolean(item.stats.execute), 9);
+  score += addReason(reasons, "Armadilhas ampliam controle de zona e pickoff.", (champion.stats.crowdControl >= 55 || champion.stats.pickoff >= 60) && Boolean(item.stats.trapControl), 9);
+  score += addReason(reasons, "Tempo acelera rotações e controle do mapa.", ["Jungle", "Mid", "Support"].includes(champion.primaryRole) && Boolean(item.stats.tempo), 8);
+  score += addReason(reasons, "Cura e escudos adicionais reforçam a proteção.", preferences.prefersHealShieldPower && Boolean(item.stats.healing || item.stats.shielding), 12);
 
   score -= addPenalty(penalties, "Dano mágico tem baixa eficiência neste campeão AD.", champion.damageProfile === "AD" && Boolean(item.stats.bonusAP) && !item.stats.bonusAD, 26);
   score -= addPenalty(penalties, "Dano físico tem baixa eficiência neste campeão AP.", champion.damageProfile === "AP" && Boolean(item.stats.bonusAD) && !item.stats.bonusAP, 24);
@@ -105,7 +113,7 @@ const takeUniqueCategories = (
   const result: Item[] = [];
   const usedCategories = new Set(selected.map((item) => item.category));
 
-  for (const item of shuffle(source)) {
+  for (const item of shuffle(uniqueById(source))) {
     if (selected.some((selectedItem) => selectedItem.id === item.id)) continue;
     if (usedCategories.has(item.category) && result.length < amount - 1) continue;
     result.push(item);
@@ -128,8 +136,15 @@ const takeUniqueCategories = (
 export function getRandomItemsForChampion(
   champion: ChampionProfile,
   count = 9,
+  excludedItemIds: string[] = [],
 ): Item[] {
-  const scored = items.map((item) => ({
+  const uniquePool = uniqueById(items);
+  const eligiblePool = uniquePool.filter(
+    (item) => !excludedItemIds.includes(item.id),
+  );
+  const sourcePool =
+    eligiblePool.length >= count ? eligiblePool : uniquePool;
+  const scored = sourcePool.map((item) => ({
     item,
     score: calculateItemFit(champion, item).score,
   }));
@@ -138,25 +153,23 @@ export function getRandomItemsForChampion(
   const risky = scored.filter(({ score }) => score < 45).map(({ item }) => item);
   const selected: Item[] = [];
 
-  const goodAmount = Math.min(Math.max(4, Math.ceil(count * 0.5)), count);
-  const averageAmount = Math.min(
-    Math.max(2, Math.ceil(count * 0.3)),
-    count - goodAmount,
-  );
+  const goodAmount = Math.min(4, count);
+  const averageAmount = Math.min(3, count - goodAmount);
+  const riskyAmount = Math.min(2, count - goodAmount - averageAmount);
 
   selected.push(...takeUniqueCategories(good.length ? good : average, goodAmount, selected));
-  selected.push(...takeUniqueCategories(average.length ? average : items, averageAmount, selected));
-  selected.push(...takeUniqueCategories(risky.length ? risky : average, count - selected.length, selected));
+  selected.push(...takeUniqueCategories(average.length ? average : sourcePool, averageAmount, selected));
+  selected.push(...takeUniqueCategories(risky.length ? risky : average, riskyAmount, selected));
 
   if (selected.length < count) {
     selected.push(
-      ...shuffle(items)
+      ...shuffle(sourcePool)
         .filter((item) => !selected.some((selectedItem) => selectedItem.id === item.id))
         .slice(0, count - selected.length),
     );
   }
 
-  return shuffle(selected).slice(0, count);
+  return shuffle(uniqueById(selected)).slice(0, count);
 }
 
 export const championHasClass = (
