@@ -8,7 +8,10 @@ import {
   generateCounterMetaEnemy,
   validateEnemyDraft,
 } from "./competitiveEnemyEngine";
-import { getRandomChampionsForRole } from "./draftEngine";
+import {
+  CHAMPION_OPTION_COUNT,
+  getRandomChampionsForRole,
+} from "./draftEngine";
 import {
   applyEventToStats,
   canDestroyNexus,
@@ -67,7 +70,11 @@ describe("MD5 roguelike engine", () => {
 
   it("sorteia campeões sem repetir e mantém o modo difícil aberto", () => {
     const classic = getRandomChampionsForRole("Top", ["Aatrox"]);
-    expect(classic).toHaveLength(10);
+    expect(CHAMPION_OPTION_COUNT).toBe(14);
+    expect(classic).toHaveLength(CHAMPION_OPTION_COUNT);
+    expect(new Set(classic.map((champion) => champion.id)).size).toBe(
+      CHAMPION_OPTION_COUNT,
+    );
     expect(classic.every((champion) => champion.roles.includes("Top"))).toBe(true);
     expect(classic.some((champion) => champion.id === "Aatrox")).toBe(false);
     const hard = getRandomChampionsForRole(

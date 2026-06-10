@@ -5177,8 +5177,9 @@ strong {
 }
 
 .draft-comparison {
+  display: grid;
+  grid-template-rows: 38px minmax(0, 1fr);
   min-width: 0;
-  padding: 15px;
 }
 
 .draft-comparison__heading {
@@ -5186,7 +5187,7 @@ strong {
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 11px;
+  margin-bottom: 6px;
 }
 
 .draft-comparison__heading h2 {
@@ -5459,6 +5460,7 @@ strong {
     minmax(480px, 0.95fr)
     minmax(400px, 0.85fr);
   gap: 16px;
+  align-items: stretch;
 }
 
 .rogue-selection-heading {
@@ -5503,11 +5505,18 @@ strong {
   margin-bottom: 6px;
 }
 
+.rogue-card-options {
+  display: grid;
+  grid-template-rows: 38px minmax(0, 1fr);
+  min-height: 330px;
+}
+
 .rogue-card-options__heading h2 {
   font-size: 17px;
 }
 
 .rogue-card {
+  height: 100%;
   min-height: 286px;
   padding: 14px;
 }
@@ -5550,6 +5559,12 @@ strong {
 }
 
 .draft-comparison {
+  height: 100%;
+  min-height: 330px;
+}
+
+.draft-comparison__body {
+  height: 100%;
   padding: 13px;
 }
 

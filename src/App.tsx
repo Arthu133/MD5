@@ -6,7 +6,10 @@ import { ResultScreen } from "./components/ResultScreen";
 import { RogueTournamentScreen } from "./components/RogueTournamentScreen";
 import { TeamAnalysis } from "./components/TeamAnalysis";
 import { DATA_DRAGON_VERSION } from "./data/champions/generatedChampions";
-import { getRandomChampionsForRole } from "./engine/draftEngine";
+import {
+  CHAMPION_OPTION_COUNT,
+  getRandomChampionsForRole,
+} from "./engine/draftEngine";
 import {
   canUseRefresh,
   consumeRefresh,
@@ -53,7 +56,12 @@ function App() {
     setResult(null);
     setRefreshesRemaining(refreshByDifficulty[difficulty]);
     setChampionOptions(
-      getRandomChampionsForRole(ROLES[0], [], 10, difficulty),
+      getRandomChampionsForRole(
+        ROLES[0],
+        [],
+        CHAMPION_OPTION_COUNT,
+        difficulty,
+      ),
     );
     setStage("draft");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -78,7 +86,7 @@ function App() {
       getRandomChampionsForRole(
         ROLES[nextIndex],
         nextTeam.map((build) => build.champion.id),
-        10,
+        CHAMPION_OPTION_COUNT,
         difficulty ?? "Classic",
       ),
     );
@@ -95,13 +103,18 @@ function App() {
     const refreshed = getRandomChampionsForRole(
       currentRole,
       excluded,
-      10,
+      CHAMPION_OPTION_COUNT,
       difficulty,
     );
     setChampionOptions(
-      refreshed.length === 10
+      refreshed.length === CHAMPION_OPTION_COUNT
         ? refreshed
-        : getRandomChampionsForRole(currentRole, selectedIds, 10, difficulty),
+        : getRandomChampionsForRole(
+            currentRole,
+            selectedIds,
+            CHAMPION_OPTION_COUNT,
+            difficulty,
+          ),
     );
     setRefreshesRemaining(consumeRefresh);
   };
@@ -207,7 +220,7 @@ function App() {
             <article>
               <strong>01</strong>
               <span>Draft competitivo</span>
-              <p>Escolha um campeão entre 10 opções para cada posição.</p>
+              <p>Escolha um campeão entre 14 opções para cada posição.</p>
             </article>
             <article>
               <strong>02</strong>
@@ -239,7 +252,7 @@ function App() {
                   {difficulty === "Hard" ? "DIFÍCIL" : "CLÁSSICO"}
                 </p>
                 <h1>Escolha seu {currentRole}</h1>
-                <p>Dez opções. Uma escolha. Nenhum campeão se repete.</p>
+                <p>Quatorze opções. Uma escolha. Nenhum campeão se repete.</p>
               </div>
               <div className="role-progress">
                 {ROLES.map((role, index) => (

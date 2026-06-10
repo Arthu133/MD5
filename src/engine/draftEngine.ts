@@ -1,6 +1,8 @@
 import { championProfiles } from "../data/champions/championProfiles";
 import type { ChampionProfile, GameDifficulty, Role } from "../types/game";
 
+export const CHAMPION_OPTION_COUNT = 14;
+
 export const shuffle = <T,>(values: T[]): T[] => {
   const result = [...values];
   for (let index = result.length - 1; index > 0; index -= 1) {
@@ -13,7 +15,7 @@ export const shuffle = <T,>(values: T[]): T[] => {
 export function getRandomChampionsForRole(
   role: Role,
   selectedChampionIds: string[],
-  count = 10,
+  count = CHAMPION_OPTION_COUNT,
   difficulty: GameDifficulty = "Classic",
 ): ChampionProfile[] {
   const available = championProfiles.filter(
