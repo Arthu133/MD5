@@ -1,0 +1,95 @@
+import type { EnemyTeam } from "../types/game";
+
+export const enemies: EnemyTeam[] = [
+  {
+    id: "ferro-cinzelado",
+    name: "Esquadrão Ferro Cinzelado",
+    difficulty: 45,
+    archetype: "Balanced",
+    strengths: ["jogo seguro", "poucos erros graves"],
+    weaknesses: ["baixo potencial explosivo"],
+    modifiers: {
+      earlyPressure: 2, scaling: 1, teamFight: 2, pickoff: 0,
+      objectiveControl: 2, antiAD: 1, antiAP: 1,
+      punishNoFrontline: 2, punishBadItems: 2,
+    },
+  },
+  {
+    id: "presas-neon",
+    name: "Presas de Neon",
+    difficulty: 52,
+    archetype: "Pickoff",
+    strengths: ["caça a alvos isolados", "mobilidade"],
+    weaknesses: ["lutas frontais longas"],
+    modifiers: {
+      earlyPressure: 4, scaling: 0, teamFight: -1, pickoff: 8,
+      objectiveControl: 2, antiAD: 2, antiAP: 1,
+      punishNoFrontline: 4, punishBadItems: 4,
+    },
+  },
+  {
+    id: "muralha-cobalto",
+    name: "Muralha de Cobalto",
+    difficulty: 58,
+    archetype: "Protect the Carry",
+    strengths: ["proteção de carregador", "luta prolongada"],
+    weaknesses: ["dependência de uma fonte de dano"],
+    modifiers: {
+      earlyPressure: 0, scaling: 6, teamFight: 5, pickoff: -1,
+      objectiveControl: 4, antiAD: 3, antiAP: 3,
+      punishNoFrontline: 3, punishBadItems: 5,
+    },
+  },
+  {
+    id: "cerco-violeta",
+    name: "Cerco Violeta",
+    difficulty: 65,
+    archetype: "Poke",
+    strengths: ["alcance", "controle de terreno"],
+    weaknesses: ["iniciações rápidas"],
+    modifiers: {
+      earlyPressure: 3, scaling: 4, teamFight: 3, pickoff: 1,
+      objectiveControl: 5, antiAD: 2, antiAP: 4,
+      punishNoFrontline: 6, punishBadItems: 5,
+    },
+  },
+  {
+    id: "vanguarda-rubra",
+    name: "Vanguarda Rubra",
+    difficulty: 73,
+    archetype: "Early Snowball",
+    strengths: ["pressão inicial", "invasões agressivas"],
+    weaknesses: ["perde força em jogos longos"],
+    modifiers: {
+      earlyPressure: 10, scaling: -3, teamFight: 3, pickoff: 5,
+      objectiveControl: 6, antiAD: 4, antiAP: 2,
+      punishNoFrontline: 7, punishBadItems: 7,
+    },
+  },
+  {
+    id: "coroa-partida",
+    name: "Coroa Partida",
+    difficulty: 82,
+    archetype: "Split Push",
+    strengths: ["pressão lateral", "controle de mapa"],
+    weaknesses: ["execução em lutas 5v5"],
+    modifiers: {
+      earlyPressure: 5, scaling: 6, teamFight: 0, pickoff: 4,
+      objectiveControl: 8, antiAD: 5, antiAP: 4,
+      punishNoFrontline: 5, punishBadItems: 8,
+    },
+  },
+  {
+    id: "nexo-obscuro",
+    name: "Nexo Obscuro",
+    difficulty: 90,
+    archetype: "Team Fight",
+    strengths: ["luta decisiva", "controle de grupo", "frontline"],
+    weaknesses: ["precisa lutar em conjunto"],
+    modifiers: {
+      earlyPressure: 5, scaling: 9, teamFight: 11, pickoff: 3,
+      objectiveControl: 9, antiAD: 7, antiAP: 7,
+      punishNoFrontline: 11, punishBadItems: 10,
+    },
+  },
+];

@@ -1,0 +1,47 @@
+import type { EnemyOrganizationProfile } from "../../types/game";
+
+const organization = (
+  id: string,
+  name: string,
+  tier: EnemyOrganizationProfile["tier"],
+  preferredTemplates: string[],
+  values: [number, number, number, number, number, number],
+): EnemyOrganizationProfile => ({
+  id,
+  name,
+  tier,
+  preferredTemplates,
+  aggression: values[0],
+  scalingPreference: values[1],
+  objectiveFocus: values[2],
+  draftDiscipline: values[3],
+  itemizationDiscipline: values[4],
+  adaptability: values[5],
+});
+
+export const enemyOrganizations: EnemyOrganizationProfile[] = [
+  organization("ordem-carmesim", "Ordem Carmesim", "Elite", ["dive-comp", "pick-comp"], [88, 48, 82, 90, 91, 88]),
+  organization("dragoes-norte", "Dragões do Norte", "Major", ["early-objective", "front-to-back-scaling"], [72, 70, 90, 84, 85, 80]),
+  organization("eclipse-real", "Eclipse Real", "Champion", ["front-to-back-scaling", "control-mage-teamfight"], [76, 94, 94, 97, 98, 96]),
+  organization("titas-vidro", "Titãs de Vidro", "Regional", ["poke-siege", "pick-comp"], [68, 62, 70, 72, 69, 66]),
+  organization("lobos-aurora", "Lobos da Aurora", "Major", ["bot-lane-snowball", "early-objective"], [86, 52, 88, 82, 84, 78]),
+  organization("sentinelas-vazio", "Sentinelas do Vazio", "Elite", ["protect-carry", "front-to-back-scaling"], [62, 94, 91, 93, 95, 92]),
+  organization("falcoes-zaun", "Falcões de Zaun", "Regional", ["dive-comp", "bot-lane-snowball"], [90, 44, 76, 70, 72, 68]),
+  organization("cavaleiros-ferro", "Cavaleiros de Ferro", "Major", ["control-mage-teamfight", "front-to-back-scaling"], [58, 85, 88, 87, 89, 84]),
+  organization("imperio-rubro", "Império Rubro", "Elite", ["early-objective", "dive-comp"], [92, 55, 94, 91, 92, 90]),
+  organization("tempestade-astral", "Tempestade Astral", "Major", ["poke-siege", "control-mage-teamfight"], [64, 83, 84, 86, 88, 82]),
+  organization("vanguarda-celeste", "Vanguarda Celeste", "Regional", ["front-to-back-scaling", "protect-carry"], [55, 84, 76, 75, 77, 72]),
+  organization("corvos-noxus", "Corvos de Noxus", "Major", ["pick-comp", "dive-comp"], [88, 50, 79, 83, 85, 84]),
+  organization("aurora-prime", "Aurora Prime", "Elite", ["protect-carry", "control-mage-teamfight"], [60, 96, 92, 94, 96, 95]),
+  organization("legiao-obsidiana", "Legião Obsidiana", "Champion", ["dive-comp", "control-mage-teamfight", "front-to-back-scaling"], [86, 88, 97, 98, 97, 98]),
+  organization("miragem-azul", "Miragem Azul", "Major", ["poke-siege", "split-push-pressure"], [66, 78, 79, 84, 82, 88]),
+  organization("colosso-lunar", "Colosso Lunar", "Elite", ["front-to-back-scaling", "strong-side-top"], [70, 90, 89, 92, 94, 91]),
+  organization("laminas-sol", "Lâminas do Sol", "Regional", ["strong-side-top", "dive-comp"], [84, 54, 72, 73, 70, 71]),
+  organization("serpes-mar", "Serpes do Mar", "Wildcard", ["pick-comp", "poke-siege"], [74, 58, 62, 58, 55, 57]),
+  organization("guardioes-bruma", "Guardiões da Bruma", "Wildcard", ["front-to-back-scaling"], [48, 72, 60, 57, 59, 52]),
+  organization("forja-dourada", "Forja Dourada", "Regional", ["strong-side-top", "early-objective"], [78, 56, 78, 74, 76, 69]),
+  organization("ecos-shurima", "Ecos de Shurima", "Major", ["split-push-pressure", "poke-siege"], [70, 80, 82, 85, 83, 87]),
+  organization("trono-gelido", "Trono Gelado", "Elite", ["control-mage-teamfight", "protect-carry"], [56, 95, 90, 94, 95, 93]),
+  organization("rebeldes-piltover", "Rebeldes de Piltover", "Wildcard", ["bot-lane-snowball"], [82, 48, 65, 60, 62, 58]),
+  organization("ascendentes-areia", "Ascendentes da Areia", "Champion", ["control-mage-teamfight", "front-to-back-scaling", "split-push-pressure"], [74, 96, 96, 98, 98, 97]),
+];
