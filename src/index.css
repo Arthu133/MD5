@@ -978,7 +978,7 @@ strong {
 
 .champion-card__portrait {
   position: relative;
-  aspect-ratio: 0.88;
+  aspect-ratio: 0.78;
   overflow: hidden;
   background:
     radial-gradient(circle at 50% 35%, rgba(90, 115, 197, 0.3), transparent 55%),
@@ -997,6 +997,7 @@ strong {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 22%;
   transform: scale(1.03);
   transition: transform 240ms ease;
 }
@@ -4933,5 +4934,443 @@ strong {
   .enemy-draft-preview__list img {
     width: 48px;
     height: 48px;
+  }
+}
+
+/* Left-side primary controls */
+
+.review-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.review-control-sidebar,
+.rogue-selection-sidebar,
+.live-control-sidebar {
+  position: sticky;
+  top: 18px;
+  min-width: 0;
+  align-self: start;
+}
+
+.review-control-sidebar .simulation-setup {
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 0;
+  padding: 22px;
+}
+
+.review-control-sidebar .simulation-setup > .primary-button {
+  width: 100%;
+}
+
+.review-content {
+  min-width: 0;
+}
+
+.rogue-selection-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(540px, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+
+.rogue-selection-sidebar .rogue-next-match-score {
+  min-width: 0;
+  text-align: left;
+}
+
+.rogue-selection-sidebar .rogue-selection-confirm {
+  display: grid;
+  gap: 18px;
+  margin: 12px 0 0;
+}
+
+.rogue-selection-sidebar .rogue-selection-confirm__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.rogue-selection-sidebar .rogue-selection-confirm__actions button {
+  width: 100%;
+}
+
+.simulation-shell {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.live-control-sidebar .live-controls {
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.live-control-sidebar .segmented-control button {
+  flex: 1 1 calc(50% - 5px);
+}
+
+.live-control-sidebar .live-control-actions {
+  justify-content: stretch;
+}
+
+.live-control-sidebar .live-control-actions button {
+  flex: 1 1 100%;
+}
+
+.match-summary--compact {
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 18px;
+}
+
+.match-summary--compact .match-summary__stats {
+  display: none;
+}
+
+.match-summary--compact > button {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .review-layout,
+  .rogue-selection-layout,
+  .simulation-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .review-control-sidebar,
+  .rogue-selection-sidebar,
+  .live-control-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 680px) {
+  .champion-card {
+    display: block;
+  }
+}
+
+@media (max-width: 620px) {
+  .champion-card__portrait {
+    height: auto;
+    aspect-ratio: 0.95;
+  }
+}
+
+/* Strategic card selection and champion art hierarchy */
+
+.champion-card__body {
+  min-height: 184px;
+  padding: 15px 16px;
+}
+
+.champion-card__body .eyebrow {
+  font-size: 8px;
+}
+
+.champion-card__body h3 {
+  margin-bottom: 8px;
+  font-size: 22px;
+}
+
+.champion-card__body > p {
+  display: -webkit-box;
+  min-height: 50px;
+  margin: 10px 0;
+  overflow: hidden;
+  color: #8793a8;
+  font-size: 10px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.champion-card__footer {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top-color: rgba(255, 255, 255, 0.055);
+  color: #737f92;
+  font-size: 8px;
+}
+
+.champion-card__footer strong {
+  color: #aeb8c9;
+  font-size: 8px;
+}
+
+.rogue-selection-screen {
+  width: min(1540px, calc(100% - 28px));
+  margin: 18px auto 48px;
+}
+
+.rogue-selection-heading {
+  margin-bottom: 14px;
+}
+
+.rogue-selection-heading h1 {
+  margin-bottom: 6px;
+  font-size: clamp(30px, 3.2vw, 46px);
+}
+
+.rogue-selection-heading p:last-child {
+  max-width: 860px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.rogue-card-options__heading {
+  margin-bottom: 9px;
+}
+
+.rogue-card-options__heading h2 {
+  font-size: 19px;
+}
+
+.rogue-card-grid {
+  gap: 9px;
+}
+
+.rogue-card {
+  min-height: 350px;
+  padding: 18px;
+  border-radius: 11px;
+}
+
+.rogue-card__sigil {
+  width: 62px;
+  height: 62px;
+  margin: 18px auto 16px;
+  font-size: 18px;
+}
+
+.rogue-card h3 {
+  margin-bottom: 7px;
+  font-size: 20px;
+}
+
+.rogue-card > p {
+  min-height: 42px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.rogue-effect-summary,
+.rogue-card__hidden-effect {
+  margin-top: 13px;
+  padding-top: 12px;
+}
+
+.rogue-effect-summary {
+  gap: 5px;
+}
+
+.rogue-effect-summary span,
+.rogue-card__hidden-effect {
+  font-size: 8px;
+}
+
+.draft-comparison {
+  min-width: 0;
+  padding: 15px;
+}
+
+.draft-comparison__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 11px;
+}
+
+.draft-comparison__heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.draft-comparison__heading > span {
+  max-width: 135px;
+  color: var(--gold-soft);
+  font-size: 7px;
+  font-weight: 900;
+  line-height: 1.4;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.draft-comparison__teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 6px;
+  color: #aeb8c9;
+  font-size: 9px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.draft-comparison__rows {
+  display: grid;
+  gap: 5px;
+}
+
+.draft-comparison__rows article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
+  gap: 4px;
+  align-items: center;
+}
+
+.draft-comparison__pick {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.022);
+}
+
+.draft-comparison__pick--enemy {
+  grid-template-columns: minmax(0, 1fr) 38px;
+  text-align: right;
+}
+
+.draft-comparison__pick img {
+  width: 38px;
+  height: 38px;
+  border-radius: 4px;
+  object-fit: cover;
+  object-position: center 22%;
+}
+
+.draft-comparison__pick span,
+.draft-comparison__pick strong,
+.draft-comparison__pick small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft-comparison__pick span {
+  color: var(--gold);
+  font-size: 6px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.draft-comparison__pick strong {
+  margin: 1px 0;
+  font-size: 9px;
+}
+
+.draft-comparison__pick small {
+  color: var(--muted);
+  font-size: 6px;
+}
+
+.draft-comparison__versus {
+  color: #59657a;
+  font-size: 7px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.draft-comparison__plan {
+  display: grid;
+  gap: 3px;
+  margin-top: 9px;
+  padding: 9px;
+  border-left: 2px solid var(--red);
+  background: rgba(255, 111, 126, 0.045);
+}
+
+.draft-comparison__plan span {
+  color: var(--muted);
+  font-size: 6px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.draft-comparison__plan strong {
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1210px) {
+  .rogue-selection-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .draft-comparison {
+    grid-column: 1 / -1;
+  }
+
+  .draft-comparison__rows {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .draft-comparison__rows article {
+    grid-template-columns: 1fr;
+  }
+
+  .draft-comparison__versus {
+    display: none;
+  }
+
+  .draft-comparison__pick,
+  .draft-comparison__pick--enemy {
+    grid-template-columns: 32px minmax(0, 1fr);
+    text-align: left;
+  }
+
+  .draft-comparison__pick--enemy {
+    margin-top: 4px;
+  }
+
+  .draft-comparison__pick img {
+    width: 32px;
+    height: 32px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .draft-comparison__pick--enemy > div {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .rogue-selection-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .draft-comparison {
+    grid-column: auto;
+  }
+
+  .draft-comparison__rows {
+    grid-template-columns: 1fr;
+  }
+
+  .draft-comparison__rows article {
+    grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
+  }
+
+  .draft-comparison__versus {
+    display: block;
+  }
+
+  .draft-comparison__pick--enemy {
+    margin-top: 0;
   }
 }

@@ -282,8 +282,8 @@ function App() {
               <p className="step-kicker">DRAFT COMPLETO</p>
               <h1>Seu elenco está inscrito.</h1>
               <p>
-                A partir de agora, uma nova carta será escolhida antes de cada
-                partida e ficará ativa até o fim da campanha.
+                Nos grupos, você escolhe uma carta por partida. Nas fases MD5,
+                a carta escolhida vale por toda a série.
               </p>
             </div>
             <div className="review-score">
@@ -302,85 +302,91 @@ function App() {
               )}
             </div>
           </div>
-          <section className="review-builds">
-            {team.map((build) => (
-              <BuildSummary
-                build={build}
-                key={build.role}
-                hiddenInsights={difficulty === "Hard"}
-              />
-            ))}
-          </section>
-          {difficulty === "Classic" ? (
-            <TeamAnalysis score={teamScore} />
-          ) : (
-            <section className="blind-review panel">
-              <p className="eyebrow">MODO DIFÍCIL</p>
-              <h2>Os riscos estratégicos permanecem ocultos por enquanto.</h2>
-              <p>
-                Encaixe nas posições, condição de vitória e números das cartas
-                serão revelados somente depois da campanha.
-              </p>
-            </section>
-          )}
-          <div className="simulation-setup panel">
-            <div>
-              <p className="eyebrow">TRANSMISSÃO DO TORNEIO</p>
-              <h2>Como você quer acompanhar?</h2>
-              <p>
-                A escolha de cartas sempre será manual. O modo define apenas a
-                passagem entre a partida encerrada e a próxima escolha.
-              </p>
-            </div>
-            <div className="simulation-option-group">
-              <span>Modo</span>
-              <div className="segmented-control">
+          <div className="review-layout">
+            <aside className="review-control-sidebar">
+              <div className="simulation-setup panel">
+                <div>
+                  <p className="eyebrow">TRANSMISSÃO DO TORNEIO</p>
+                  <h2>Como você quer acompanhar?</h2>
+                  <p>
+                    A escolha de cartas sempre será manual. O modo define apenas
+                    a passagem entre a partida encerrada e a próxima escolha.
+                  </p>
+                </div>
+                <div className="simulation-option-group">
+                  <span>Modo</span>
+                  <div className="segmented-control">
+                    <button
+                      className={simulationMode === "Automatic" ? "is-active" : ""}
+                      type="button"
+                      onClick={() => setSimulationMode("Automatic")}
+                    >
+                      Automático
+                    </button>
+                    <button
+                      className={simulationMode === "Manual" ? "is-active" : ""}
+                      type="button"
+                      onClick={() => setSimulationMode("Manual")}
+                    >
+                      Manual
+                    </button>
+                  </div>
+                </div>
+                <div className="simulation-option-group">
+                  <span>Velocidade inicial</span>
+                  <div className="segmented-control">
+                    {([
+                      ["Slow", "Devagar"],
+                      ["Normal", "Normal"],
+                      ["Fast", "Rápida"],
+                      ["UltraFast", "Ultra rápida"],
+                    ] as [SimulationSpeed, string][]).map(([value, label]) => (
+                      <button
+                        className={simulationSpeed === value ? "is-active" : ""}
+                        type="button"
+                        onClick={() => setSimulationSpeed(value)}
+                        key={value}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <button
-                  className={simulationMode === "Automatic" ? "is-active" : ""}
+                  className="primary-button primary-button--large"
                   type="button"
-                  onClick={() => setSimulationMode("Automatic")}
+                  onClick={() => {
+                    setStage("live");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
                 >
-                  Automático
-                </button>
-                <button
-                  className={simulationMode === "Manual" ? "is-active" : ""}
-                  type="button"
-                  onClick={() => setSimulationMode("Manual")}
-                >
-                  Manual
+                  Escolher primeira carta
                 </button>
               </div>
-            </div>
-            <div className="simulation-option-group">
-              <span>Velocidade inicial</span>
-              <div className="segmented-control">
-                {([
-                  ["Slow", "Devagar"],
-                  ["Normal", "Normal"],
-                  ["Fast", "Rápida"],
-                  ["UltraFast", "Ultra rápida"],
-                ] as [SimulationSpeed, string][]).map(([value, label]) => (
-                  <button
-                    className={simulationSpeed === value ? "is-active" : ""}
-                    type="button"
-                    onClick={() => setSimulationSpeed(value)}
-                    key={value}
-                  >
-                    {label}
-                  </button>
+            </aside>
+            <div className="review-content">
+              <section className="review-builds">
+                {team.map((build) => (
+                  <BuildSummary
+                    build={build}
+                    key={build.role}
+                    hiddenInsights={difficulty === "Hard"}
+                  />
                 ))}
-              </div>
+              </section>
+              {difficulty === "Classic" ? (
+                <TeamAnalysis score={teamScore} />
+              ) : (
+                <section className="blind-review panel">
+                  <p className="eyebrow">MODO DIFÍCIL</p>
+                  <h2>Os riscos estratégicos permanecem ocultos por enquanto.</h2>
+                  <p>
+                    Encaixe nas posições, condição de vitória e números das cartas
+                    serão revelados somente depois da campanha.
+                  </p>
+                </section>
+              )}
             </div>
-            <button
-              className="primary-button primary-button--large"
-              type="button"
-              onClick={() => {
-                setStage("live");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            >
-              Escolher primeira carta
-            </button>
           </div>
         </main>
       ) : null}

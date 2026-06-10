@@ -3,17 +3,21 @@ import { getRogueCardMatchupInsight } from "../engine/rogueCardEngine";
 import type {
   ActiveRogueCard,
   CompetitiveEnemyTeam,
+  DraftTeam,
   GameDifficulty,
   RogueCard,
+  TeamArchetype,
   TournamentStage,
 } from "../types/game";
 import { ActiveRogueCardsPanel } from "./ActiveRogueCardsPanel";
-import { EnemyDraftPreview } from "./EnemyDraftPreview";
+import { DraftComparisonPanel } from "./DraftComparisonPanel";
 import { RogueCardCard } from "./RogueCardCard";
 
 type RogueCardSelectionProps = {
   options: RogueCard[];
   activeCards: ActiveRogueCard[];
+  userTeam: DraftTeam;
+  userArchetype: TeamArchetype;
   difficulty: GameDifficulty;
   stage: TournamentStage;
   matchNumber: number;
@@ -35,6 +39,8 @@ const stageLabels: Record<TournamentStage, string> = {
 export function RogueCardSelection({
   options,
   activeCards,
+  userTeam,
+  userArchetype,
   difficulty,
   stage,
   matchNumber,
@@ -72,19 +78,50 @@ export function RogueCardSelection({
               : "que permanecerá por toda esta série MD5."}
           </p>
         </div>
-        <div className="rogue-next-match-score">
-          <span>Partida {matchNumber}</span>
-          <strong>
-            {stage === "Groups"
-              ? enemy.archetype
-              : `MD5 · ${seriesUserWins} x ${seriesEnemyWins}`}
-          </strong>
-        </div>
       </section>
 
-      <section className="rogue-preparation-grid">
-        <EnemyDraftPreview enemy={enemy} difficulty={difficulty} />
-        <div className="rogue-card-options">
+      <div className="rogue-selection-layout">
+        <aside className="rogue-selection-sidebar">
+          <div className="rogue-next-match-score">
+            <span>Partida {matchNumber}</span>
+            <strong>
+              {stage === "Groups"
+                ? enemy.archetype
+                : `MD5 · ${seriesUserWins} x ${seriesEnemyWins}`}
+            </strong>
+          </div>
+          <div className="rogue-selection-confirm">
+            <div>
+              <span>Carta escolhida</span>
+              <strong>{selected?.name ?? "Selecione uma das três opções"}</strong>
+              {matchupInsight ? <p>{matchupInsight}</p> : null}
+            </div>
+            <div className="rogue-selection-confirm__actions">
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={refreshesRemaining <= 0}
+                onClick={() => {
+                  setSelected(null);
+                  onRefresh();
+                }}
+              >
+                Atualizar cartas ({refreshesRemaining})
+              </button>
+              <button
+                className="primary-button primary-button--large"
+                type="button"
+                disabled={!selected}
+                onClick={() => selected && onConfirm(selected)}
+              >
+                {isGroupStage
+                  ? "Aplicar e iniciar partida"
+                  : "Aplicar e iniciar série MD5"}
+              </button>
+            </div>
+          </div>
+        </aside>
+        <section className="rogue-card-options">
           <div className="rogue-card-options__heading">
             <p className="eyebrow">ESCOLHA 1 DE 3</p>
             <h2>Regras disponíveis</h2>
@@ -100,38 +137,13 @@ export function RogueCardSelection({
               />
             ))}
           </div>
-        </div>
-      </section>
-
-      <div className="rogue-selection-confirm">
-        <div>
-          <span>Carta escolhida</span>
-          <strong>{selected?.name ?? "Selecione uma das três opções"}</strong>
-          {matchupInsight ? <p>{matchupInsight}</p> : null}
-        </div>
-        <div className="rogue-selection-confirm__actions">
-          <button
-            className="secondary-button"
-            type="button"
-            disabled={refreshesRemaining <= 0}
-            onClick={() => {
-              setSelected(null);
-              onRefresh();
-            }}
-          >
-            Atualizar cartas ({refreshesRemaining})
-          </button>
-          <button
-            className="primary-button primary-button--large"
-            type="button"
-            disabled={!selected}
-            onClick={() => selected && onConfirm(selected)}
-          >
-            {isGroupStage
-              ? "Aplicar e iniciar partida"
-              : "Aplicar e iniciar série MD5"}
-          </button>
-        </div>
+        </section>
+        <DraftComparisonPanel
+          userTeam={userTeam}
+          userArchetype={userArchetype}
+          enemy={enemy}
+          difficulty={difficulty}
+        />
       </div>
 
       {activeCards.length ? (

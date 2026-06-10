@@ -113,12 +113,8 @@ export function RogueLiveMatch({
           gameNumber={match.gameNumber}
         />
       ) : null}
-      <ActiveRogueCardsPanel activeCards={match.activeCards ?? []} compact />
-      <div className="simulation-layout">
-        <div className="simulation-layout__info">
-          <LiveScoreboard simulation={simulation} stats={currentStats} />
-          <CurrentEventSummary events={visibleEvents} currentMinute={minute} />
-          <LiveObjectivePanel stats={currentStats} />
+      <div className="simulation-shell">
+        <aside className="live-control-sidebar">
           {matchFinished ? (
             <MatchSummaryCard
               simulation={simulation}
@@ -132,6 +128,7 @@ export function RogueLiveMatch({
                   : "Continuar série MD5"
               }
               onNext={onContinue}
+              compact
             />
           ) : null}
           <LiveTimelineControls
@@ -149,15 +146,26 @@ export function RogueLiveMatch({
             onSkipMatch={() => setMinute(simulation.durationMinutes)}
             onSkipTournament={onSkipTournament}
           />
-        </div>
-        <div className="simulation-layout__map">
-          <LiveMiniMap
-            currentMinute={minute}
-            events={visibleEvents}
-            stats={currentStats}
-            userTeamName={simulation.userTeamName}
-            enemyTeamName={simulation.enemyName}
-          />
+        </aside>
+        <div className="simulation-layout">
+          <div className="simulation-layout__info">
+            <ActiveRogueCardsPanel
+              activeCards={match.activeCards ?? []}
+              compact
+            />
+            <LiveScoreboard simulation={simulation} stats={currentStats} />
+            <CurrentEventSummary events={visibleEvents} currentMinute={minute} />
+            <LiveObjectivePanel stats={currentStats} />
+          </div>
+          <div className="simulation-layout__map">
+            <LiveMiniMap
+              currentMinute={minute}
+              events={visibleEvents}
+              stats={currentStats}
+              userTeamName={simulation.userTeamName}
+              enemyTeamName={simulation.enemyName}
+            />
+          </div>
         </div>
       </div>
       <LiveEventFeed events={simulation.events} currentMinute={minute} />

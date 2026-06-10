@@ -13,6 +13,7 @@ type MatchSummaryCardProps = {
   seriesEnemyWins: number;
   nextLabel: string;
   onNext: () => void;
+  compact?: boolean;
 };
 
 const decisivePriority: Partial<
@@ -34,6 +35,7 @@ export function MatchSummaryCard({
   seriesEnemyWins,
   nextLabel,
   onNext,
+  compact = false,
 }: MatchSummaryCardProps) {
   const goldDifference = formatGoldDifference(
     stats.userGold,
@@ -51,7 +53,7 @@ export function MatchSummaryCard({
 
   return (
     <section
-      className={`match-summary panel ${winner === "User" ? "is-win" : "is-loss"}`}
+      className={`match-summary panel ${winner === "User" ? "is-win" : "is-loss"} ${compact ? "match-summary--compact" : ""}`}
     >
       <div className="match-summary__result">
         <p className="eyebrow">FIM DE JOGO</p>

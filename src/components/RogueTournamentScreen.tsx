@@ -122,6 +122,8 @@ export function RogueTournamentScreen({
     <RogueCardSelection
       options={options}
       activeCards={campaign.activeCards}
+      userTeam={campaign.team}
+      userArchetype={campaign.teamScore.archetype}
       difficulty={difficulty}
       stage={campaign.currentStage}
       matchNumber={campaign.matchNumber}
