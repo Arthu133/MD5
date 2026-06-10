@@ -5306,7 +5306,7 @@ strong {
   line-height: 1.4;
 }
 
-@media (max-width: 1210px) {
+@media (max-width: 1180px) {
   .rogue-selection-layout {
     grid-template-columns: 220px minmax(0, 1fr);
   }
@@ -5372,5 +5372,304 @@ strong {
 
   .draft-comparison__pick--enemy {
     margin-top: 0;
+  }
+}
+
+/* Compact champion choices and balanced card-selection columns */
+
+.champion-grid {
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 10px;
+}
+
+.champion-card {
+  width: 100%;
+  max-width: 190px;
+  justify-self: center;
+}
+
+.champion-card:hover {
+  transform: translateY(-3px);
+}
+
+.champion-card__portrait {
+  aspect-ratio: 1.12;
+}
+
+.champion-card__portrait::after {
+  height: 38%;
+}
+
+.champion-card__role,
+.champion-card__difficulty {
+  top: 7px;
+  padding: 3px 5px;
+  font-size: 7px;
+}
+
+.champion-card__role {
+  left: 7px;
+}
+
+.champion-card__difficulty {
+  right: 7px;
+}
+
+.champion-card__body {
+  min-height: 132px;
+  padding: 10px 11px;
+}
+
+.champion-card__body .eyebrow {
+  margin-bottom: 2px;
+  font-size: 7px;
+}
+
+.champion-card__body h3 {
+  margin-bottom: 5px;
+  font-size: 16px;
+  line-height: 1.1;
+}
+
+.champion-card__body > p {
+  min-height: 28px;
+  margin: 6px 0;
+  font-size: 8px;
+  line-height: 1.4;
+  -webkit-line-clamp: 2;
+}
+
+.damage-pill {
+  padding: 3px 5px;
+  font-size: 7px;
+}
+
+.champion-card__footer {
+  padding-top: 6px;
+  font-size: 7px;
+}
+
+.champion-card__footer strong {
+  font-size: 7px;
+}
+
+.rogue-selection-layout {
+  grid-template-columns:
+    240px
+    minmax(480px, 0.95fr)
+    minmax(400px, 0.85fr);
+  gap: 16px;
+}
+
+.rogue-selection-heading {
+  margin-bottom: 10px;
+}
+
+.rogue-selection-heading h1 {
+  font-size: clamp(27px, 2.8vw, 40px);
+  line-height: 1.05;
+}
+
+.rogue-selection-heading p:last-child {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.rogue-next-match-score {
+  padding: 12px 14px;
+}
+
+.rogue-selection-sidebar .rogue-selection-confirm {
+  gap: 12px;
+  padding: 14px;
+}
+
+.rogue-selection-confirm p {
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.rogue-selection-sidebar .rogue-selection-confirm__actions {
+  gap: 7px;
+}
+
+.rogue-selection-sidebar .rogue-selection-confirm__actions button {
+  padding-inline: 8px;
+  font-size: 8px;
+}
+
+.rogue-card-options__heading {
+  min-height: 38px;
+  margin-bottom: 6px;
+}
+
+.rogue-card-options__heading h2 {
+  font-size: 17px;
+}
+
+.rogue-card {
+  min-height: 286px;
+  padding: 14px;
+}
+
+.rogue-card__top {
+  font-size: 7px;
+}
+
+.rogue-card__sigil {
+  width: 48px;
+  height: 48px;
+  margin: 12px auto 10px;
+  font-size: 15px;
+}
+
+.rogue-card h3 {
+  margin-bottom: 5px;
+  font-size: 17px;
+}
+
+.rogue-card > p {
+  min-height: 36px;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.rogue-effect-summary,
+.rogue-card__hidden-effect {
+  margin-top: 9px;
+  padding-top: 8px;
+}
+
+.rogue-effect-summary {
+  gap: 3px;
+}
+
+.rogue-effect-summary span,
+.rogue-card__hidden-effect {
+  font-size: 7px;
+}
+
+.draft-comparison {
+  padding: 13px;
+}
+
+.draft-comparison__heading {
+  min-height: 38px;
+  margin-bottom: 6px;
+}
+
+.draft-comparison__heading h2 {
+  font-size: 16px;
+}
+
+.draft-comparison__rows {
+  gap: 4px;
+}
+
+.draft-comparison__pick {
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 6px;
+  padding: 3px;
+}
+
+.draft-comparison__pick--enemy {
+  grid-template-columns: minmax(0, 1fr) 34px;
+}
+
+.draft-comparison__pick img {
+  width: 34px;
+  height: 34px;
+}
+
+.draft-comparison__plan {
+  margin-top: 6px;
+  padding: 7px;
+}
+
+@media (max-width: 1180px) {
+  .rogue-selection-layout {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+
+  .draft-comparison {
+    grid-column: 1 / -1;
+  }
+
+  .draft-comparison__rows {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .draft-comparison__rows article {
+    grid-template-columns: 1fr;
+  }
+
+  .draft-comparison__versus {
+    display: none;
+  }
+
+  .draft-comparison__pick,
+  .draft-comparison__pick--enemy {
+    grid-template-columns: 30px minmax(0, 1fr);
+    text-align: left;
+  }
+
+  .draft-comparison__pick--enemy {
+    margin-top: 3px;
+  }
+
+  .draft-comparison__pick img {
+    width: 30px;
+    height: 30px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .draft-comparison__pick--enemy > div {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .rogue-selection-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .rogue-card-options {
+    grid-row: 1;
+  }
+
+  .rogue-selection-sidebar {
+    grid-row: 2;
+  }
+
+  .draft-comparison {
+    grid-row: 3;
+    grid-column: auto;
+  }
+
+  .draft-comparison__rows {
+    grid-template-columns: 1fr;
+  }
+
+  .draft-comparison__rows article {
+    grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
+  }
+
+  .draft-comparison__versus {
+    display: block;
+  }
+
+  .draft-comparison__pick--enemy {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .champion-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .champion-card {
+    max-width: none;
   }
 }
