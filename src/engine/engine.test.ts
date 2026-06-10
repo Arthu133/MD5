@@ -436,6 +436,9 @@ describe("MD5 engine", () => {
         matchSimulationTimeBudgetMs[speed],
       );
     });
-    expect(calculateMatchTickMs("UltraFast", 35)).toBe(228);
+    expect(matchSimulationTimeBudgetMs.Fast).toBe(10_000);
+    expect(matchSimulationTimeBudgetMs.UltraFast).toBe(5_000);
+    expect(calculateMatchTickMs("Fast", 35)).toBe(200);
+    expect(calculateMatchTickMs("UltraFast", 35)).toBe(85);
   });
 });

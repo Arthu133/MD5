@@ -15,8 +15,8 @@ import type {
 export const matchSimulationTimeBudgetMs: Record<SimulationSpeed, number> = {
   Slow: 45_000,
   Normal: 25_000,
-  Fast: 15_000,
-  UltraFast: 10_000,
+  Fast: 10_000,
+  UltraFast: 5_000,
 };
 
 export function calculateMatchTickMs(
@@ -24,9 +24,11 @@ export function calculateMatchTickMs(
   matchDurationMinutes: number,
 ): number {
   const budget = matchSimulationTimeBudgetMs[speed];
-  const renderingSafeBudget = budget * 0.8;
+  const renderingMargin =
+    speed === "UltraFast" ? 0.6 : speed === "Fast" ? 0.7 : 0.8;
+  const renderingSafeBudget = budget * renderingMargin;
   return Math.max(
-    80,
+    60,
     Math.floor(renderingSafeBudget / Math.max(matchDurationMinutes, 1)),
   );
 }
