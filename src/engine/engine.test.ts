@@ -209,7 +209,7 @@ describe("MD5 roguelike engine", () => {
 
     expect(secondGame.activeCards).toEqual(firstGame.activeCards);
     expect(secondGame.enemy.difficulty).toBe(firstGame.enemy.difficulty);
-    expect(secondGame.match.activeCards.at(-1)?.card.id).toBe(seriesCard.id);
+    expect(secondGame.match.activeCards!.at(-1)?.card.id).toBe(seriesCard.id);
   });
 
   it("aplica cartas aos dois drafts e oculta dicas no Difícil", () => {
@@ -289,11 +289,11 @@ describe("MD5 roguelike engine", () => {
       .filter((entry) => entry.stage !== "Groups")
       .forEach((series) => {
         expect(
-          new Set(series.games.map((match) => match.activeCards.length)).size,
+          new Set(series.games.map((match) => match.activeCards!.length)).size,
         ).toBe(1);
         expect(
           new Set(
-            series.games.map((match) => match.activeCards.at(-1)?.card.id),
+            series.games.map((match) => match.activeCards!.at(-1)?.card.id),
           ).size,
         ).toBe(1);
       });
