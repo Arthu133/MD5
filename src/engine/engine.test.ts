@@ -412,15 +412,19 @@ describe("MD5 roguelike engine", () => {
     expect(formatGoldDifference(20_000, 18_000, "User").text).toBe("+2.0k");
   });
 
-  it("respeita 10 segundos no rápido e 5 no ultra rápido", () => {
+  it("respeita os limites de duração de todos os modos", () => {
     const duration = 35;
     (["Slow", "Normal", "Fast", "UltraFast"] as const).forEach((speed) => {
       expect(calculateMatchTickMs(speed, duration) * duration).toBeLessThanOrEqual(
         matchSimulationTimeBudgetMs[speed],
       );
     });
-    expect(matchSimulationTimeBudgetMs.Fast).toBe(10_000);
-    expect(matchSimulationTimeBudgetMs.UltraFast).toBe(5_000);
-    expect(calculateMatchTickMs("UltraFast", 35)).toBe(142);
+    expect(matchSimulationTimeBudgetMs).toEqual({
+      Slow: 20_000,
+      Normal: 10_000,
+      Fast: 5_000,
+      UltraFast: 2_000,
+    });
+    expect(calculateMatchTickMs("UltraFast", 35)).toBe(57);
   });
 });

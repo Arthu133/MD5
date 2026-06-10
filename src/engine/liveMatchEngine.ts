@@ -14,10 +14,10 @@ import type {
 import { getRogueCardSummaryForMatch } from "./rogueCardEngine";
 
 export const matchSimulationTimeBudgetMs: Record<SimulationSpeed, number> = {
-  Slow: 45_000,
-  Normal: 25_000,
-  Fast: 10_000,
-  UltraFast: 5_000,
+  Slow: 20_000,
+  Normal: 10_000,
+  Fast: 5_000,
+  UltraFast: 2_000,
 };
 
 export function calculateMatchTickMs(
@@ -26,7 +26,7 @@ export function calculateMatchTickMs(
 ): number {
   const budget = matchSimulationTimeBudgetMs[speed];
   return Math.max(
-    80,
+    20,
     Math.floor(budget / Math.max(matchDurationMinutes, 1)),
   );
 }
