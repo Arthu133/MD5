@@ -213,6 +213,7 @@
 
 .rogue-selection-screen {
   display: flex;
+  width: min(1400px, calc(100% - 32px));
   min-height: 0;
   flex-direction: column;
 }
@@ -232,13 +233,16 @@
 }
 
 .rogue-selection-layout {
-  flex: 1;
+  flex: 0 1 auto;
   grid-template-columns:
     clamp(220px, 16vw, 250px)
     minmax(0, 1fr)
-    clamp(350px, 27vw, 440px);
+    clamp(350px, 25vw, 400px);
   gap: var(--ui-space-3);
+  width: 100%;
+  height: clamp(480px, 61vh, 620px);
   min-height: 0;
+  align-self: center;
 }
 
 .rogue-selection-sidebar,
@@ -441,6 +445,7 @@
 
   .rogue-selection-layout {
     grid-template-columns: 210px minmax(0, 1fr) 340px;
+    height: clamp(460px, 62vh, 500px);
   }
 
   .rogue-selection-heading h1 {
@@ -455,6 +460,7 @@
 @media (max-width: 1180px) and (min-width: 901px) {
   .rogue-selection-layout {
     grid-template-columns: 190px minmax(0, 1fr);
+    height: auto;
     overflow: auto;
   }
 
@@ -467,6 +473,14 @@
   .game-layout,
   .rogue-selection-layout {
     grid-template-columns: 1fr;
+  }
+
+  .rogue-selection-screen {
+    width: var(--ui-content-width);
+  }
+
+  .rogue-selection-layout {
+    height: auto;
   }
 
   .champion-card__body > p {
