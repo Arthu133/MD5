@@ -7,7 +7,6 @@ com fase de grupos e séries melhor de cinco.
 ## Jogue online
 
 - [playmd5.xyz](https://playmd5.xyz/)
-- [md5draft.vercel.app](https://md5draft.vercel.app/)
 
 ## Como funciona
 
