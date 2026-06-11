@@ -5688,3 +5688,393 @@ strong {
     max-width: none;
   }
 }
+
+/* Final card-selection layout polish */
+
+.rogue-selection-screen {
+  --rogue-selection-zoom: 1.25;
+  width: min(1232px, calc(80% - 26px));
+  margin: 12px auto 40px;
+  zoom: var(--rogue-selection-zoom);
+}
+
+.rogue-selection-heading {
+  margin-bottom: 12px;
+}
+
+.rogue-selection-heading h1 {
+  margin-bottom: 5px;
+  font-size: clamp(30px, 3vw, 44px);
+  line-height: 1.02;
+}
+
+.rogue-selection-heading p:last-child {
+  max-width: 920px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.rogue-selection-layout {
+  grid-template-columns:
+    192px
+    minmax(0, 1fr)
+    clamp(312px, 23.2vw, 352px);
+  gap: clamp(10px, 0.8vw, 14px);
+  align-items: stretch;
+}
+
+.rogue-selection-sidebar,
+.rogue-card-options,
+.draft-comparison {
+  min-height: clamp(400px, 52vh, 480px);
+}
+
+.rogue-selection-sidebar {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.rogue-next-match-score {
+  min-width: 0;
+  padding: 12px 14px;
+}
+
+.rogue-selection-sidebar .rogue-selection-confirm {
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 14px;
+  min-width: 0;
+  margin-top: 10px;
+  padding: 16px 14px;
+}
+
+.rogue-selection-confirm > div:first-child {
+  min-width: 0;
+}
+
+.rogue-selection-confirm strong {
+  overflow-wrap: anywhere;
+}
+
+.rogue-selection-confirm p {
+  max-width: 100%;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.rogue-selection-sidebar .rogue-selection-confirm__actions {
+  gap: 8px;
+}
+
+.rogue-selection-sidebar .rogue-selection-confirm__actions button {
+  display: grid;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 11px;
+  place-items: center;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+}
+
+.rogue-selection-confirm .primary-button:disabled {
+  border-color: rgba(228, 184, 95, 0.18);
+  color: #969b9f;
+  background: rgba(228, 184, 95, 0.1);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.rogue-card-options,
+.draft-comparison {
+  grid-template-rows: 48px minmax(0, 1fr);
+}
+
+.rogue-card-options__heading,
+.draft-comparison__heading {
+  min-height: 0;
+  margin: 0;
+  padding-bottom: 8px;
+}
+
+.rogue-card-options__heading h2,
+.draft-comparison__heading h2 {
+  margin: 0;
+  line-height: 1.15;
+}
+
+.rogue-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(10px, 0.8vw, 14px);
+  min-width: 0;
+  height: auto;
+  align-items: stretch;
+}
+
+.rogue-card {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: clamp(15px, 1.2vw, 20px);
+  overflow: hidden;
+}
+
+.rogue-card__top {
+  gap: 8px;
+}
+
+.rogue-card__top small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rogue-card__sigil {
+  width: clamp(56px, 4vw, 70px);
+  height: clamp(56px, 4vw, 70px);
+  margin: clamp(24px, 4.5vh, 38px) auto clamp(18px, 3vh, 28px);
+  font-size: 19px;
+}
+
+.rogue-card h3 {
+  margin-bottom: 8px;
+  font-size: clamp(18px, 1.35vw, 22px);
+  line-height: 1.15;
+}
+
+.rogue-card > p {
+  min-height: 50px;
+  margin-bottom: 0;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.rogue-effect-summary,
+.rogue-card__hidden-effect {
+  margin-top: auto;
+  padding-top: 13px;
+}
+
+.rogue-effect-summary {
+  gap: 6px;
+}
+
+.rogue-effect-summary span,
+.rogue-card__hidden-effect {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.rogue-card:hover {
+  transform: translateY(-4px);
+}
+
+.rogue-card.is-selected {
+  border-color: rgba(228, 184, 95, 0.9);
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(228, 184, 95, 0.28),
+    0 0 28px rgba(228, 184, 95, 0.1);
+}
+
+.draft-comparison {
+  min-width: 0;
+  height: auto;
+}
+
+.draft-comparison__heading {
+  min-width: 0;
+}
+
+.draft-comparison__heading > div {
+  min-width: 0;
+}
+
+.draft-comparison__heading > span {
+  flex: 0 1 145px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draft-comparison__body {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 13px;
+  overflow: visible;
+}
+
+.draft-comparison__teams {
+  gap: 18px;
+}
+
+.draft-comparison__teams strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft-comparison__rows {
+  display: grid;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+.draft-comparison__rows article {
+  grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr);
+  gap: 5px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.draft-comparison__pick,
+.draft-comparison__pick--enemy {
+  min-width: 0;
+  padding: 5px;
+}
+
+.draft-comparison__pick {
+  grid-template-columns: 36px minmax(0, 1fr);
+}
+
+.draft-comparison__pick--enemy {
+  grid-template-columns: minmax(0, 1fr) 36px;
+}
+
+.draft-comparison__pick > div {
+  min-width: 0;
+}
+
+.draft-comparison__pick img {
+  width: 36px;
+  height: 36px;
+  flex: none;
+}
+
+.draft-comparison__pick strong {
+  font-size: 10px;
+}
+
+.draft-comparison__pick small {
+  font-size: 7px;
+}
+
+.draft-comparison__versus {
+  align-self: center;
+}
+
+.draft-comparison__plan {
+  min-width: 0;
+  margin-top: 8px;
+  padding: 8px 9px;
+}
+
+.draft-comparison__plan strong {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1180px) {
+  .rogue-selection-layout {
+    grid-template-columns: 176px minmax(0, 1fr);
+  }
+
+  .rogue-selection-sidebar,
+  .rogue-card-options {
+    min-height: clamp(400px, 55vh, 480px);
+  }
+
+  .draft-comparison {
+    grid-column: 1 / -1;
+    min-height: auto;
+  }
+
+  .draft-comparison__rows {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: auto;
+  }
+
+  .draft-comparison__rows article {
+    grid-template-columns: 1fr;
+  }
+
+  .draft-comparison__versus {
+    display: none;
+  }
+
+  .draft-comparison__pick,
+  .draft-comparison__pick--enemy {
+    grid-template-columns: 30px minmax(0, 1fr);
+    text-align: left;
+  }
+
+  .draft-comparison__pick--enemy {
+    margin-top: 3px;
+  }
+
+  .draft-comparison__pick img {
+    width: 30px;
+    height: 30px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .draft-comparison__pick--enemy > div {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .rogue-selection-screen {
+    width: calc(100% - 24px);
+    zoom: 1;
+  }
+
+  .rogue-selection-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .rogue-card-options {
+    grid-row: 1;
+  }
+
+  .rogue-selection-sidebar {
+    grid-row: 2;
+  }
+
+  .draft-comparison {
+    grid-row: 3;
+    grid-column: auto;
+  }
+
+  .rogue-selection-sidebar,
+  .rogue-card-options,
+  .draft-comparison {
+    min-height: auto;
+  }
+
+  .rogue-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rogue-card {
+    min-height: 320px;
+  }
+
+  .draft-comparison__rows {
+    grid-template-columns: 1fr;
+  }
+
+  .draft-comparison__rows article {
+    grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr);
+  }
+
+  .draft-comparison__versus {
+    display: block;
+  }
+
+  .draft-comparison__pick--enemy {
+    margin-top: 0;
+  }
+}
