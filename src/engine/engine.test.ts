@@ -70,7 +70,7 @@ describe("MD5 roguelike engine", () => {
 
   it("sorteia campeões sem repetir e mantém o modo difícil aberto", () => {
     const classic = getRandomChampionsForRole("Top", ["Aatrox"]);
-    expect(CHAMPION_OPTION_COUNT).toBe(14);
+    expect(CHAMPION_OPTION_COUNT).toBe(10);
     expect(classic).toHaveLength(CHAMPION_OPTION_COUNT);
     expect(new Set(classic.map((champion) => champion.id)).size).toBe(
       CHAMPION_OPTION_COUNT,

@@ -1,7 +1,7 @@
 import { championProfiles } from "../data/champions/championProfiles";
 import type { ChampionProfile, GameDifficulty, Role } from "../types/game";
 
-export const CHAMPION_OPTION_COUNT = 14;
+export const CHAMPION_OPTION_COUNT = 10;
 
 export const shuffle = <T,>(values: T[]): T[] => {
   const result = [...values];

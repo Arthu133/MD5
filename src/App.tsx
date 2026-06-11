@@ -220,7 +220,7 @@ function App() {
             <article>
               <strong>01</strong>
               <span>Draft competitivo</span>
-              <p>Escolha um campeão entre 14 opções para cada posição.</p>
+              <p>Escolha um campeão entre 10 opções para cada posição.</p>
             </article>
             <article>
               <strong>02</strong>
@@ -252,7 +252,7 @@ function App() {
                   {difficulty === "Hard" ? "DIFÍCIL" : "CLÁSSICO"}
                 </p>
                 <h1>Escolha seu {currentRole}</h1>
-                <p>Quatorze opções. Uma escolha. Nenhum campeão se repete.</p>
+                <p>Dez opções. Uma escolha. Nenhum campeão se repete.</p>
               </div>
               <div className="role-progress">
                 {ROLES.map((role, index) => (
