@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { BuildSummary } from "./components/BuildSummary";
 import { ChampionCard } from "./components/ChampionCard";
 import { DraftBoard } from "./components/DraftBoard";
@@ -434,6 +435,7 @@ function App() {
           Inc.
         </p>
       </footer>
+      <Analytics />
     </div>
   );
 }
