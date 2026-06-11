@@ -31,7 +31,6 @@ type RogueTournamentScreenProps = {
   onSpeedChange: (speed: SimulationSpeed) => void;
   refreshesRemaining: number;
   onConsumeRefresh: () => void;
-  onDisableRefresh: () => void;
   onComplete: (result: CampaignResult) => void;
 };
 
@@ -44,7 +43,6 @@ export function RogueTournamentScreen({
   onSpeedChange,
   refreshesRemaining,
   onConsumeRefresh,
-  onDisableRefresh,
   onComplete,
 }: RogueTournamentScreenProps) {
   const [campaign, setCampaign] = useState<RogueCampaignState>(() =>
@@ -75,7 +73,6 @@ export function RogueTournamentScreen({
   }, [campaign, onComplete, prepared]);
 
   const chooseCard = (card: RogueCard) => {
-    if (card.id === "sem-refresh") onDisableRefresh();
     setPrepared(prepareRogueCampaignMatch(campaign, card));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

@@ -164,27 +164,17 @@ const matchesCondition = (
   return true;
 };
 
-const effectIntensity = (
-  activeCards: ActiveRogueCard[],
-  sourceCardId: string,
-) =>
-  sourceCardId !== "cartas-instaveis" &&
-  activeCards.some((entry) => entry.card.id === "cartas-instaveis")
-    ? 1.25
-    : 1;
-
 export function getRogueRuleModifiers(
   activeCards: ActiveRogueCard[],
 ): RogueRuleModifiers {
   const modifiers = { ...defaultRogueModifiers };
   activeCards.forEach(({ card }) => {
-    const intensity = effectIntensity(activeCards, card.id);
     card.effects.forEach((entry) => {
       if (!entry.rule || entry.condition) return;
       modifiers[entry.rule] = applyOperation(
         modifiers[entry.rule],
         entry,
-        intensity,
+        1,
       );
     });
   });
@@ -205,19 +195,18 @@ export function applyRogueCardsToChampionStats(
       })),
     };
     activeCards.forEach(({ card }) => {
-      const intensity = effectIntensity(activeCards, card.id);
       card.effects.forEach((entry) => {
         if (!matchesCondition(entry.condition, build, undefined, stage)) return;
         if (entry.attribute) {
           champion = applyChampionAttributeDelta(
             champion,
             entry.attribute,
-            entry.value * intensity,
+            entry.value,
           );
         }
         if (entry.stat) {
           champion.stats[entry.stat] = clamp(
-            applyOperation(champion.stats[entry.stat], entry, intensity),
+            applyOperation(champion.stats[entry.stat], entry, 1),
           );
         }
       });
@@ -236,21 +225,19 @@ export function applyRogueCardsToTeamScore(
 ): TeamScore {
   const metrics = { ...baseScore.metrics };
   activeCards.forEach(({ card }) => {
-    const intensity = effectIntensity(activeCards, card.id);
     card.effects.forEach((entry) => {
       if (
         !entry.metric ||
         !matchesCondition(entry.condition, undefined, metrics, stage)
       ) return;
       metrics[entry.metric] = clamp(
-        applyOperation(metrics[entry.metric], entry, intensity),
+        applyOperation(metrics[entry.metric], entry, 1),
       );
     });
   });
 
   const modifiers = getRogueRuleModifiers(activeCards);
   const conditionalScoreCapModifier = activeCards.reduce((total, { card }) => {
-    const intensity = effectIntensity(activeCards, card.id);
     return (
       total +
       card.effects.reduce((cardTotal, entry) => {
@@ -260,7 +247,7 @@ export function applyRogueCardsToTeamScore(
         ) {
           return cardTotal;
         }
-        return cardTotal + entry.value * intensity;
+        return cardTotal + entry.value;
       }, 0)
     );
   }, 0);
@@ -391,48 +378,37 @@ export function getRogueCardMatchupInsight(
   );
   const engage = enemyScore.metrics.engage;
   const scaling = enemyScore.metrics.scaling;
-  const fullAD =
-    enemyScore.metrics.physicalDamage - enemyScore.metrics.magicDamage >= 28;
-  const fullAP =
-    enemyScore.metrics.magicDamage - enemyScore.metrics.physicalDamage >= 28;
-
   if (card.id === "anti-tank-meta" && tankCount >= 2) {
-    return `Este adversário usa ${tankCount} campeões resistentes, então Anti-Tank Meta tende a reduzir a força da frontline inimiga.`;
+    return "Boa contra a frontline resistente do adversário.";
   }
   if (card.id === "anti-cura-meta" && sustain >= 52) {
-    return "O draft inimigo tem bastante sustain, então Anti-Cura Meta pode enfraquecer suas lutas longas.";
+    return "Boa contra o sustain do adversário.";
   }
   if (
     ["meta-agressivo", "sem-paciencia", "power-spike-cedo"].includes(card.id) &&
     scaling >= 62
   ) {
-    return "O inimigo escala bem, então acelerar a partida pode impedir que ele alcance seu melhor momento.";
+    return "Acelera a partida contra um adversário de scaling.";
   }
   if (
     ["escudos-fortes", "protect-the-carry"].includes(card.id) &&
     engage >= 55
   ) {
-    return "O adversário tem engage forte; mais proteção pode preservar seus carregadores na iniciação.";
+    return "Protege seus carries contra engage forte.";
   }
   if (card.id === "dive-meta" && enemyArchetype === "Poke") {
-    return "O adversário joga por poke, então Dive Meta pode ajudar a encurtar a distância e forçar lutas.";
-  }
-  if (card.id === "full-ad-punido" && fullAD) {
-    return "O draft inimigo concentra dano físico, então Full AD Punido tende a afetá-lo com mais força.";
-  }
-  if (card.id === "full-ap-punido" && fullAP) {
-    return "O draft inimigo concentra dano mágico, então Full AP Punido tende a afetá-lo com mais força.";
+    return "Dive ajuda a alcançar uma composição de poke.";
   }
   if (
     card.tags.includes("objective") &&
     enemyScore.metrics.objectiveControl >= 58
   ) {
-    return "O inimigo disputa objetivos muito bem; esta carta deve tornar essas janelas ainda mais decisivas.";
+    return "Objetivos ficarão ainda mais disputados.";
   }
   if (card.tags.includes("late") && scaling >= 62) {
-    return "Os dois lados podem ganhar valor no late game; escolher esta carta aumenta a importância da execução tardia.";
+    return "Os dois times ganham mais valor no late game.";
   }
-  return `Contra uma composição de ${enemyArchetype}, esta regra altera o ritmo para os dois times. Compare os pontos fortes do seu draft antes de confirmar.`;
+  return `Regra global: favorece quem usa melhor ${card.tags[0] ?? enemyArchetype}.`;
 }
 
 export function applyRogueCardsToLiveMatch(

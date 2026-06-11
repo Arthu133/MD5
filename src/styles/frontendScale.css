@@ -131,6 +131,10 @@
   padding: var(--ui-space-2) var(--ui-space-3);
 }
 
+.champion-card--compact .champion-card__body {
+  min-height: calc(108px * var(--ui-scale));
+}
+
 .champion-card__body .eyebrow {
   font-size: var(--ui-font-xs);
   line-height: 1.25;

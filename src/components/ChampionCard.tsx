@@ -21,7 +21,7 @@ export function ChampionCard({
 
   return (
     <button
-      className="champion-card"
+      className={`champion-card${hiddenInsights ? "" : " champion-card--compact"}`}
       type="button"
       onClick={() => onSelect(champion)}
       disabled={disabled}
@@ -39,7 +39,6 @@ export function ChampionCard({
           />
         ) : null}
         <span className="champion-card__role">{role}</span>
-        <span className="champion-card__difficulty">{champion.difficulty}/10</span>
       </div>
       <div className="champion-card__body">
         <div>
@@ -62,13 +61,13 @@ export function ChampionCard({
             ))}
           </div>
         ) : null}
-        <p>
-          {hiddenInsights
-            ? champion.title
+        {hiddenInsights ? (
+          <p>
+            {champion.title
               ? `${champion.name}, ${champion.title}.`
-              : "Um campeão de Runeterra com ferramentas que você precisa interpretar."
-            : champion.summary}
-        </p>
+              : "Um campeão de Runeterra com ferramentas que você precisa interpretar."}
+          </p>
+        ) : null}
         <div className="champion-card__footer">
           <span>
             {hiddenInsights

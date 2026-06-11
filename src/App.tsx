@@ -422,7 +422,6 @@ function App() {
           onSpeedChange={setSimulationSpeed}
           refreshesRemaining={refreshesRemaining}
           onConsumeRefresh={() => setRefreshesRemaining(consumeRefresh)}
-          onDisableRefresh={() => setRefreshesRemaining(0)}
           onComplete={(campaignResult) => {
             setResult(campaignResult);
             setStage("result");

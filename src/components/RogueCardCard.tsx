@@ -26,19 +26,20 @@ const styleLabel = (card: RogueCard) => {
       entry.toLowerCase(),
     ),
   );
-  return tag ?? card.tags[0] ?? "Adaptação";
+  return tag ?? card.tags[0] ?? "Regra global";
 };
 
 const riskLabel = (card: RogueCard) => {
-  const affectsBothTeams = card.target.includes("BothTeams");
-  const hasTradeoff =
-    card.target.includes("UserTeam") &&
-    card.effects.some(
+  const highRisk = card.effects.some(
     (effect) =>
-      (effect.operation === "multiply" ? effect.value < 1 : effect.value < 0),
-    );
+      effect.rule === "enemyDraftQuality" && effect.value > 0,
+  );
+  const hasTradeoff = card.effects.some(
+    (effect) =>
+      effect.operation === "multiply" ? effect.value < 1 : effect.value < 0,
+  );
 
-  return affectsBothTeams ? "Alto" : hasTradeoff ? "Médio" : "Baixo";
+  return highRisk ? "Alto" : hasTradeoff ? "Médio" : "Baixo";
 };
 
 export function RogueCardCard({

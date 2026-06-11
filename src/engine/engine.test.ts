@@ -8,7 +8,10 @@ import {
   getTopChampionAttributes,
 } from "../data/champions/championAttributes";
 import { generatedChampions } from "../data/champions/generatedChampions";
-import { rogueCards } from "../data/rogueCards";
+import {
+  rogueCards,
+  rogueCardValidationErrors,
+} from "../data/rogueCards";
 import type { DraftTeam, Role } from "../types/game";
 import { ROLES } from "../types/game";
 import {
@@ -157,11 +160,13 @@ describe("MD5 roguelike engine", () => {
     expect(new Set(primaryPlans).size).toBeGreaterThanOrEqual(5);
   });
 
-  it("mantém campeões e todas as cartas pedidas", () => {
+  it("mantém campeões e um catálogo de cartas simples", () => {
     expect(generatedChampions.length).toBeGreaterThanOrEqual(170);
-    expect(rogueCards.length).toBeGreaterThanOrEqual(60);
+    expect(rogueCards.length).toBeGreaterThanOrEqual(45);
+    expect(rogueCardValidationErrors).toEqual([]);
     expect(new Set(rogueCards.map((card) => card.id)).size).toBe(rogueCards.length);
-    ["Cartas Instáveis", "Sem Refresh", "Meta de Mundial", "Resistência Final"].forEach(
+    expect(rogueCards.every((card) => card.effects.length <= 4)).toBe(true);
+    ["Dive Meta", "Poke Meta", "Protect the Carry", "Resistência Final"].forEach(
       (name) => expect(rogueCards.some((card) => card.name === name)).toBe(true),
     );
   });
@@ -229,7 +234,11 @@ describe("MD5 roguelike engine", () => {
       [] as ReturnType<typeof addRogueCardToCampaign>,
     );
     const enhanced = applyRogueCardsToChampionStats(team, active, "Groups");
-    const score = applyRogueCardsToTeamScore(baseScore, active, "Groups");
+    const score = applyRogueCardsToTeamScore(
+      calculateTeamScore(enhanced, "Classic"),
+      active,
+      "Groups",
+    );
     const rules = applyRogueCardsToLiveMatch(active);
     expect(active).toHaveLength(2);
     expect(
@@ -252,6 +261,43 @@ describe("MD5 roguelike engine", () => {
     );
     expect(score.metrics.earlyGame).toBeGreaterThan(baseScore.metrics.earlyGame);
     expect(rules.fightChanceMultiplier).toBeGreaterThan(1);
+  });
+
+  it("faz cartas temáticas influenciarem o plano sem decidir o jogo sozinhas", () => {
+    const team = createTeam();
+    const baseIdentity = analyzeTeamIdentity(team);
+    const baseScore = calculateTeamScore(team, "Classic");
+    const cases = [
+      ["poke-meta", "Poke / Siege"],
+      ["dive-meta", "Dive"],
+      ["late-game-absoluto", "Scaling"],
+      ["top-ilha", "Split Push"],
+    ] as const;
+
+    cases.forEach(([cardId, condition]) => {
+      const selected = rogueCards.find((card) => card.id === cardId)!;
+      const active = addRogueCardToCampaign([], selected, {
+        matchId: `Groups-${cardId}`,
+        stage: "Groups",
+        userTeam: team,
+        enemyTeam: team,
+        enemyName: "Teste",
+        enemyArchetype: "Balanced",
+        activeCards: [],
+        difficulty: "Classic",
+      });
+      const enhanced = applyRogueCardsToChampionStats(team, active, "Groups");
+      const enhancedScore = applyRogueCardsToTeamScore(
+        calculateTeamScore(enhanced, "Classic"),
+        active,
+        "Groups",
+      );
+
+      expect(analyzeTeamIdentity(enhanced).scores[condition]).toBeGreaterThan(
+        baseIdentity.scores[condition],
+      );
+      expect(enhancedScore.total - baseScore.total).toBeLessThanOrEqual(12);
+    });
   });
 
   it("reduz a nota com campeões fora de rota", () => {
