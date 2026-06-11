@@ -1,4 +1,5 @@
 import type { ChampionBuild } from "../types/game";
+import { getTopChampionAttributes } from "../data/champions/championAttributes";
 
 type BuildSummaryProps = {
   build: ChampionBuild;
@@ -11,6 +12,7 @@ export function BuildSummary({
   compact = false,
   hiddenInsights = false,
 }: BuildSummaryProps) {
+  const topAttributes = getTopChampionAttributes(build.champion, 2);
   const functionLabel = build.champion.classes.includes("Engager")
     ? "Iniciação"
     : build.champion.classes.includes("Tank")
@@ -36,7 +38,7 @@ export function BuildSummary({
         <div>
           <p className="eyebrow">{build.role}</p>
           <h3>{build.champion.name}</h3>
-          <span>{functionLabel}</span>
+          <span>{topAttributes[0]?.label ?? functionLabel}</span>
         </div>
         {!hiddenInsights ? (
           <div className="score-orb">

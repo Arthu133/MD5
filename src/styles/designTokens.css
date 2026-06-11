@@ -1,0 +1,26 @@
+:root {
+  --ui-scale: 1.25;
+  --ui-space-1: calc(4px * var(--ui-scale));
+  --ui-space-2: calc(8px * var(--ui-scale));
+  --ui-space-3: calc(12px * var(--ui-scale));
+  --ui-space-4: calc(16px * var(--ui-scale));
+  --ui-space-5: calc(20px * var(--ui-scale));
+  --ui-radius-sm: calc(4px * var(--ui-scale));
+  --ui-radius-md: calc(7px * var(--ui-scale));
+  --ui-radius-lg: calc(12px * var(--ui-scale));
+  --ui-font-2xs: calc(0.5rem * var(--ui-scale));
+  --ui-font-xs: calc(0.625rem * var(--ui-scale));
+  --ui-font-sm: calc(0.75rem * var(--ui-scale));
+  --ui-font-md: calc(0.875rem * var(--ui-scale));
+  --ui-font-lg: calc(1.125rem * var(--ui-scale));
+  --ui-control-height: calc(36px * var(--ui-scale));
+  --ui-header-height: clamp(64px, calc(58px * var(--ui-scale)), 76px);
+  --ui-content-width: min(1540px, calc(100% - 32px));
+}
+
+@media (max-width: 900px) {
+  :root {
+    --ui-scale: 1.1;
+    --ui-content-width: calc(100% - 24px);
+  }
+}

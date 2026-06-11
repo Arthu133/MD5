@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { championProfiles } from "../data/champions/championProfiles";
+import {
+  championAttributeValidationErrors,
+  championProfiles,
+} from "../data/champions/championProfiles";
+import { getChampionAttributeValue } from "../data/champions/championAttributes";
 import { generatedChampions } from "../data/champions/generatedChampions";
 import { rogueCards } from "../data/rogueCards";
 import type { DraftTeam, Role } from "../types/game";
@@ -45,6 +49,7 @@ import {
   simulateCampaign,
 } from "./simulationEngine";
 import { calculateTeamScore } from "./synergyEngine";
+import { analyzeTeamIdentity } from "./teamIdentityEngine";
 
 const getChampion = (id: string) =>
   championProfiles.find((champion) => champion.id === id)!;
@@ -59,6 +64,29 @@ const createTeam = (
   }));
 
 describe("MD5 roguelike engine", () => {
+  it("validates individual attributes and distinct win conditions", () => {
+    expect(championAttributeValidationErrors).toEqual([]);
+    expect(
+      championProfiles.every((champion) => champion.attributes.length >= 5),
+    ).toBe(true);
+    const trundle = getChampion("Trundle");
+    expect(getChampionAttributeValue(trundle, "antiTank")).toBeGreaterThanOrEqual(
+      90,
+    );
+    expect(getChampionAttributeValue(trundle, "duelist")).toBeGreaterThanOrEqual(
+      85,
+    );
+
+    const teamFight = analyzeTeamIdentity(createTeam());
+    const sideLane = analyzeTeamIdentity(
+      createTeam(["Fiora", "Nidalee", "TwistedFate", "Ezreal", "Bard"]),
+    );
+    expect(teamFight.primaryWinCondition).not.toBe(
+      sideLane.primaryWinCondition,
+    );
+    expect(sideLane.secondaryWinConditions.length).toBeGreaterThan(0);
+  });
+
   it("mantém campeões e todas as cartas pedidas", () => {
     expect(generatedChampions.length).toBeGreaterThanOrEqual(170);
     expect(rogueCards.length).toBeGreaterThanOrEqual(60);
@@ -140,6 +168,17 @@ describe("MD5 roguelike engine", () => {
     ).toBeGreaterThan(
       team.find((build) => build.role === "Jungle")!.champion.stats
         .objectiveControl,
+    );
+    expect(
+      getChampionAttributeValue(
+        enhanced.find((build) => build.role === "Jungle")!.champion,
+        "junglePressure",
+      ),
+    ).toBeGreaterThan(
+      getChampionAttributeValue(
+        team.find((build) => build.role === "Jungle")!.champion,
+        "junglePressure",
+      ),
     );
     expect(score.metrics.earlyGame).toBeGreaterThan(baseScore.metrics.earlyGame);
     expect(rules.fightChanceMultiplier).toBeGreaterThan(1);

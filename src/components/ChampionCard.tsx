@@ -1,4 +1,5 @@
 import type { ChampionProfile, GameDifficulty, Role } from "../types/game";
+import { getTopChampionAttributes } from "../data/champions/championAttributes";
 
 export type ChampionCardProps = {
   champion: ChampionProfile;
@@ -16,6 +17,7 @@ export function ChampionCard({
   gameDifficulty = "Classic",
 }: ChampionCardProps) {
   const hiddenInsights = gameDifficulty === "Hard";
+  const topAttributes = getTopChampionAttributes(champion, 3);
 
   return (
     <button
@@ -52,6 +54,13 @@ export function ChampionCard({
           <span className={`damage-pill damage-pill--${champion.damageProfile.toLowerCase()}`}>
             {champion.damageProfile}
           </span>
+        ) : null}
+        {!hiddenInsights ? (
+          <div className="champion-card__attributes">
+            {topAttributes.map((attribute) => (
+              <span key={attribute.key}>{attribute.label}</span>
+            ))}
+          </div>
         ) : null}
         <p>
           {hiddenInsights

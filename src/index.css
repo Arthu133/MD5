@@ -6429,10 +6429,8 @@ strong {
 /* Final card-selection layout polish */
 
 .rogue-selection-screen {
-  --rogue-selection-zoom: 1.25;
-  width: min(1232px, calc(80% - 26px));
+  width: min(1540px, calc(100% - 32px));
   margin: 12px auto 40px;
-  zoom: var(--rogue-selection-zoom);
 }
 
 .rogue-selection-heading {
@@ -6782,7 +6780,6 @@ strong {
 @media (max-width: 900px) {
   .rogue-selection-screen {
     width: calc(100% - 24px);
-    zoom: 1;
   }
 
   .rogue-selection-layout {

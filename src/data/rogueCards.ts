@@ -6,7 +6,7 @@ import type {
 
 const effect = (
   type: RogueCardEffect["type"],
-  key: "stat" | "metric" | "rule",
+  key: "stat" | "attribute" | "metric" | "rule",
   name: string,
   value: number,
   operation: RogueCardEffect["operation"] = "add",
@@ -49,6 +49,20 @@ const stat = (
   condition?: RogueCardEffect["condition"],
 ) => effect("ChampionStatModifier", "stat", name, value, "add", condition);
 
+const attribute = (
+  name: NonNullable<RogueCardEffect["attribute"]>,
+  value: number,
+  condition?: RogueCardEffect["condition"],
+) =>
+  effect(
+    "ChampionAttributeModifier",
+    "attribute",
+    name,
+    value,
+    "add",
+    condition,
+  );
+
 const rule = (
   name: string,
   value: number,
@@ -71,6 +85,9 @@ export const rogueCards: RogueCard[] = [
   card("sem-frontline", "Sem Frontline", "Tanques perdem espaço e o dano passa a decidir tudo.", "Rare", [
     metric("frontline", -18),
     metric("pickoff", 9),
+    attribute("frontline", -14),
+    attribute("mobility", 7),
+    attribute("pickoff", 7),
     rule("fightChanceMultiplier", 1.12, "multiply"),
   ], ["chaos", "damage"]),
   card("guerra-de-dragoes", "Guerra de Dragões", "Dragões aparecem antes e valem muito mais.", "Common", [
@@ -127,6 +144,9 @@ export const rogueCards: RogueCard[] = [
   card("jungle-dominante", "Jungle Dominante", "A Jungle controla ritmo e objetivos.", "Rare", [
     stat("objectiveControl", 14, { roles: ["Jungle"] }),
     stat("earlyPressure", 10, { roles: ["Jungle"] }),
+    attribute("junglePressure", 14, { roles: ["Jungle"] }),
+    attribute("objectiveControl", 10, { roles: ["Jungle"] }),
+    attribute("roaming", 8, { roles: ["Jungle"] }),
     metric("objectiveControl", 8),
   ], ["jungle", "objective"]),
   card("mid-prioridade", "Mid Prioridade", "Prioridade no meio acelera rotações e pickoffs.", "Common", [
@@ -143,16 +163,26 @@ export const rogueCards: RogueCard[] = [
     metric("engage", 12),
     metric("earlyGame", 8),
     stat("mobility", 7),
+    attribute("dive", 14),
+    attribute("engage", 10),
+    attribute("burst", 7),
   ], ["dive", "engage"]),
   card("poke-meta", "Poke Meta", "Wave clear e desgaste antes de objetivos são premiados.", "Rare", [
     metric("waveClear", 12),
     metric("pickoff", 6),
+    attribute("poke", 14),
+    attribute("siege", 10),
+    attribute("longRange", 8),
     rule("fightChanceMultiplier", 0.92, "multiply"),
   ], ["poke", "map"]),
   card("protect-the-carry", "Protect the Carry", "Peel, frontline e scaling formam a condição central.", "Rare", [
     metric("peel", 13),
     metric("frontline", 8),
     metric("scaling", 7),
+    attribute("protectCarry", 14),
+    attribute("peel", 10),
+    attribute("shielding", 8),
+    attribute("hypercarry", 6),
   ], ["protect", "late"]),
   card("caos-no-draft", "Caos no Draft", "Off-meta é valorizado e a execução fica imprevisível.", "Epic", [
     rule("offMetaModifier", 18),

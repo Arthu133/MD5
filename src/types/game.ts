@@ -48,6 +48,62 @@ export type StrategicStats = {
   utility: number;
 };
 
+export type ChampionAttributeKey =
+  | "tank"
+  | "fighter"
+  | "mage"
+  | "assassin"
+  | "marksman"
+  | "support"
+  | "enchanter"
+  | "controller"
+  | "engage"
+  | "disengage"
+  | "peel"
+  | "burst"
+  | "dps"
+  | "poke"
+  | "siege"
+  | "waveClear"
+  | "splitPush"
+  | "sustain"
+  | "healing"
+  | "shielding"
+  | "mobility"
+  | "crowdControl"
+  | "pickoff"
+  | "frontline"
+  | "backline"
+  | "scaling"
+  | "earlyGame"
+  | "lateGame"
+  | "snowball"
+  | "comeback"
+  | "objectiveControl"
+  | "teamFight"
+  | "duelist"
+  | "antiTank"
+  | "utility"
+  | "roaming"
+  | "junglePressure"
+  | "laneBully"
+  | "hypercarry"
+  | "protectCarry"
+  | "dive"
+  | "zoneControl"
+  | "visionControl"
+  | "globalPressure"
+  | "resetChampion"
+  | "highRisk"
+  | "lowRange"
+  | "longRange";
+
+export type ChampionAttribute = {
+  key: ChampionAttributeKey;
+  label: string;
+  value: number;
+};
+
 export type ItemPreferences = {
   prefersAD: boolean;
   prefersAP: boolean;
@@ -78,6 +134,7 @@ export type ChampionProfile = {
   damageProfile: DamageProfile;
   difficulty: number;
   stats: StrategicStats;
+  attributes: ChampionAttribute[];
   tags: string[];
   itemPreferences: ItemPreferences;
   weaknesses: string[];
@@ -256,6 +313,42 @@ export type TeamArchetype =
   | "Scaling"
   | "Balanced";
 
+export type WinConditionKey =
+  | "Early Snowball"
+  | "Late Game Scaling"
+  | "Team Fight 5v5"
+  | "Split Push"
+  | "Pickoff"
+  | "Poke / Siege"
+  | "Dive / Engage"
+  | "Protect the Carry"
+  | "Objective Control"
+  | "Dragon Stacking"
+  | "Baron Pressure"
+  | "Front-to-Back"
+  | "Side Lane Pressure"
+  | "Skirmish"
+  | "Vision Control"
+  | "Comeback Scaling"
+  | "Burst / Pick"
+  | "Sustain Fight"
+  | "Anti-Tank Scaling"
+  | "Map Pressure";
+
+export type TeamIdentity = {
+  primaryWinCondition: WinConditionKey;
+  secondaryWinConditions: WinConditionKey[];
+  strengths: string[];
+  weaknesses: string[];
+  riskLevel: "Low" | "Medium" | "High";
+  scalingProfile: "Early game" | "Mid game" | "Late game";
+  damageProfile: "Physical" | "Magic" | "Mixed" | "Utility";
+  confidence: number;
+  scores: Record<WinConditionKey, number>;
+  attributeProfile: Partial<Record<ChampionAttributeKey, number>>;
+  legacyArchetype: TeamArchetype;
+};
+
 export type MetaTier = "S" | "A" | "B" | "C" | "OffMeta";
 
 export type MetaPlaystyle =
@@ -352,6 +445,7 @@ export type TeamScore = {
   rawTotal: number;
   scoreCap?: ScoreCapResult;
   archetype: TeamArchetype;
+  identity: TeamIdentity;
   metrics: TeamMetrics;
   synergyBonus: number;
   championStrength: number;
@@ -546,6 +640,7 @@ export type RogueCardCondition = {
 export type RogueCardEffect = {
   type:
     | "ChampionStatModifier"
+    | "ChampionAttributeModifier"
     | "TeamScoreModifier"
     | "DraftRuleModifier"
     | "ObjectiveModifier"
@@ -556,6 +651,7 @@ export type RogueCardEffect = {
     | "EnemyAIModifier"
     | "ScoreCapModifier";
   stat?: keyof ChampionProfile["stats"];
+  attribute?: ChampionAttributeKey;
   metric?: keyof TeamMetrics;
   rule?: keyof RogueRuleModifiers;
   operation: RogueCardOperation;

@@ -2,19 +2,19 @@ import type {
   CompetitiveEnemyTeam,
   DraftTeam,
   GameDifficulty,
-  TeamArchetype,
+  TeamIdentity,
 } from "../types/game";
 
 type DraftComparisonPanelProps = {
   userTeam: DraftTeam;
-  userArchetype: TeamArchetype;
+  userIdentity: TeamIdentity;
   enemy: CompetitiveEnemyTeam;
   difficulty: GameDifficulty;
 };
 
 export function DraftComparisonPanel({
   userTeam,
-  userArchetype,
+  userIdentity,
   enemy,
   difficulty,
 }: DraftComparisonPanelProps) {
@@ -29,11 +29,6 @@ export function DraftComparisonPanel({
           </p>
           <h2>Comparação dos drafts</h2>
         </div>
-        {difficulty === "Classic" ? (
-          <span>
-            {userArchetype} × {enemy.archetype}
-          </span>
-        ) : null}
       </div>
 
       <div className="draft-comparison__body panel">
@@ -81,9 +76,15 @@ export function DraftComparisonPanel({
         </div>
 
         {difficulty === "Classic" ? (
-          <div className="draft-comparison__plan">
-            <span>Plano adversário</span>
-            <strong>{enemy.winCondition}</strong>
+          <div className="draft-comparison__plans">
+            <div className="draft-comparison__plan">
+              <span>Seu plano</span>
+              <strong>{userIdentity.primaryWinCondition}</strong>
+            </div>
+            <div className="draft-comparison__plan">
+              <span>Plano adversário</span>
+              <strong>{enemy.winCondition}</strong>
+            </div>
           </div>
         ) : null}
       </div>

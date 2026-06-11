@@ -29,6 +29,10 @@ import {
   getRogueCardSummaryForMatch,
 } from "./rogueCardEngine";
 import { calculateTeamScore } from "./synergyEngine";
+import {
+  analyzeTeamIdentity,
+  calculateIdentityMatchupAdvantage,
+} from "./teamIdentityEngine";
 
 const clamp = (value: number, min = 4, max = 96) =>
   Math.max(min, Math.min(max, value));
@@ -240,6 +244,10 @@ export function simulateCompetitiveGame(
       : calculateSeriesConsistencyPenalty(teamScore, activeCards);
   const matchupAdvantage =
     matchupMatrix[teamScore.archetype][enemy.archetype] ?? 0;
+  const identityAdvantage = calculateIdentityMatchupAdvantage(
+    teamScore.identity,
+    analyzeTeamIdentity(enemy.simulatedDraft),
+  );
   const userQuality =
     teamScore.total * 0.56 +
     metrics.cardSynergy * 0.11 +
@@ -278,7 +286,8 @@ export function simulateCompetitiveGame(
   const chance = clamp(
     50 +
       (userQuality - enemyQuality) * 1.15 +
-      matchupAdvantage -
+      matchupAdvantage +
+      identityAdvantage -
       punishedWeaknessPenalty(teamScore, enemy, difficulty) -
       seriesPenalty -
       adaptationPenalty +

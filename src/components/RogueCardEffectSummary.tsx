@@ -72,7 +72,12 @@ export function RogueCardEffectSummary({
   return (
     <div className="rogue-effect-summary">
       {card.effects.slice(0, 4).map((entry, index) => {
-        const key = entry.metric ?? entry.stat ?? entry.rule ?? entry.type;
+        const key =
+          entry.attribute ??
+          entry.metric ??
+          entry.stat ??
+          entry.rule ??
+          entry.type;
         return (
           <span key={`${card.id}-${key}-${index}`}>
             <span className="rogue-effect-summary__label">

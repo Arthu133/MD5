@@ -124,7 +124,7 @@ export function RogueTournamentScreen({
       options={options}
       activeCards={campaign.activeCards}
       userTeam={campaign.team}
-      userArchetype={campaign.teamScore.archetype}
+      userIdentity={campaign.teamScore.identity}
       difficulty={difficulty}
       stage={campaign.currentStage}
       matchNumber={campaign.matchNumber}

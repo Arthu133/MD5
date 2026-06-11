@@ -12,6 +12,7 @@ import type {
   TeamScore,
 } from "../types/game";
 import { getRogueCardSummaryForMatch } from "./rogueCardEngine";
+import { getIdentityPhaseBonus } from "./teamIdentityEngine";
 
 export const matchSimulationTimeBudgetMs: Record<SimulationSpeed, number> = {
   Slow: 60_000,
@@ -133,6 +134,7 @@ const calculateSidePower = (
     userMetrics.waveClear * 0.05 +
     (lateGame ? userMetrics.scaling : userMetrics.earlyGame) * 0.18 +
     userMetrics.consistency * 0.07 +
+    getIdentityPhaseBonus(userTeamScore.identity, minute) +
     (goldDifference / 900) *
       (goldDifference > 0 ? modifiers?.snowballMultiplier ?? 1 : 1) +
     Math.max(0, -goldDifference / 1400) *
@@ -166,6 +168,7 @@ const chooseSide = (
   enemy: CompetitiveEnemyTeam,
   context: MatchContext,
   objectiveBias = 0,
+  strategicBias = 0,
 ): MatchSide => {
   const userPower =
     calculateSidePower("User", minute, stats, userTeamScore, enemy, context) +
@@ -173,9 +176,16 @@ const chooseSide = (
   const enemyPower =
     calculateSidePower("Enemy", minute, stats, userTeamScore, enemy, context) +
     enemy.modifiers.objectiveControl * 10 * objectiveBias;
-  const userChance = clamp(50 + (userPower - enemyPower) * 1.2, 18, 82);
+  const userChance = clamp(
+    50 + (userPower - enemyPower) * 1.2 + strategicBias,
+    18,
+    82,
+  );
   return Math.random() * 100 < userChance ? "User" : "Enemy";
 };
+
+const cappedStrategicBias = (value: number) =>
+  Math.max(-4, Math.min(4, (value - 50) * 0.08));
 
 const incrementSideStat = (
   stats: LiveMatchStats,
@@ -524,12 +534,21 @@ export function generateMinuteEvents(
     (minute < 14 ? 0.09 : minute < 28 ? 0.16 : 0.2) *
     (modifiers?.fightChanceMultiplier ?? 1);
   if (minute > 7 && Math.random() < fightChance) {
+    const fightIdentity =
+      minute < 14
+        ? Math.max(
+            userTeamScore.identity.attributeProfile.pickoff ?? 0,
+            userTeamScore.identity.scores.Skirmish,
+          )
+        : userTeamScore.identity.attributeProfile.teamFight ?? 0;
     const side = chooseSide(
       minute,
       currentStats,
       userTeamScore,
       enemy,
       context,
+      0,
+      cappedStrategicBias(fightIdentity),
     );
     const zone = pickRandom(skirmishZones);
     const team = sideName(side, enemy);
@@ -607,12 +626,19 @@ export function generateMinuteEvents(
     (modifiers?.towerChanceMultiplier ?? 1) *
     Math.max(0.3, 1 - (modifiers?.towerResistance ?? 0));
   if (Math.random() < towerChance) {
+    const pressureIdentity = Math.max(
+      userTeamScore.identity.attributeProfile.splitPush ?? 0,
+      userTeamScore.identity.attributeProfile.siege ?? 0,
+      userTeamScore.identity.attributeProfile.waveClear ?? 0,
+    );
     const side = chooseSide(
       minute,
       currentStats,
       userTeamScore,
       enemy,
       context,
+      0,
+      cappedStrategicBias(pressureIdentity),
     );
     const defendingSide = opposingSide(side);
     const availableLanes = laneZones.filter(

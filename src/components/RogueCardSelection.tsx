@@ -6,7 +6,7 @@ import type {
   DraftTeam,
   GameDifficulty,
   RogueCard,
-  TeamArchetype,
+  TeamIdentity,
   TournamentStage,
 } from "../types/game";
 import { DraftComparisonPanel } from "./DraftComparisonPanel";
@@ -17,7 +17,7 @@ type RogueCardSelectionProps = {
   options: RogueCard[];
   activeCards: ActiveRogueCard[];
   userTeam: DraftTeam;
-  userArchetype: TeamArchetype;
+  userIdentity: TeamIdentity;
   difficulty: GameDifficulty;
   stage: TournamentStage;
   matchNumber: number;
@@ -40,7 +40,7 @@ export function RogueCardSelection({
   options,
   activeCards,
   userTeam,
-  userArchetype,
+  userIdentity,
   difficulty,
   stage,
   matchNumber,
@@ -157,7 +157,7 @@ export function RogueCardSelection({
         </section>
         <DraftComparisonPanel
           userTeam={userTeam}
-          userArchetype={userArchetype}
+          userIdentity={userIdentity}
           enemy={enemy}
           difficulty={difficulty}
         />

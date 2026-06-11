@@ -7,6 +7,10 @@ import type {
   StrategicStats,
 } from "../../types/game";
 import { championRoleOverrides } from "./championRoleOverrides";
+import {
+  buildChampionAttributes,
+  validateChampionAttributes,
+} from "./championAttributes";
 import { generatedChampions } from "./generatedChampions";
 
 const clamp = (value: number, min = 0, max = 100) =>
@@ -267,6 +271,12 @@ export const championProfiles: ChampionProfile[] = generatedChampions.map((champ
     damageProfile,
     difficulty,
     stats,
+    attributes: buildChampionAttributes({
+      id: champion.id,
+      roles,
+      classes,
+      stats,
+    }),
     tags: [
       ...champion.tags.map((tag) => tag.toLowerCase()),
       ...(pokeChampions.has(champion.id) ? ["poke"] : []),
@@ -279,3 +289,12 @@ export const championProfiles: ChampionProfile[] = generatedChampions.map((champ
     resource: champion.resource,
   };
 });
+
+export const championAttributeValidationErrors =
+  validateChampionAttributes(championProfiles);
+
+if (championAttributeValidationErrors.length) {
+  throw new Error(
+    `Atributos invalidos de campeoes:\n${championAttributeValidationErrors.join("\n")}`,
+  );
+}

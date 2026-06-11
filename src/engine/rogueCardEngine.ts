@@ -17,6 +17,7 @@ import type {
 } from "../types/game";
 import { calculateRoleFit } from "./roleEngine";
 import { calculateTeamScore } from "./synergyEngine";
+import { applyChampionAttributeDelta } from "./championAttributeEngine";
 
 const clamp = (value: number, min = 0, max = 100) =>
   Math.round(Math.max(min, Math.min(max, value)));
@@ -196,22 +197,34 @@ export function applyRogueCardsToChampionStats(
   stage?: TournamentStage,
 ): DraftTeam {
   return team.map((build) => {
-    const stats = { ...build.champion.stats };
+    let champion = {
+      ...build.champion,
+      stats: { ...build.champion.stats },
+      attributes: build.champion.attributes.map((attribute) => ({
+        ...attribute,
+      })),
+    };
     activeCards.forEach(({ card }) => {
       const intensity = effectIntensity(activeCards, card.id);
       card.effects.forEach((entry) => {
-        if (
-          !entry.stat ||
-          !matchesCondition(entry.condition, build, undefined, stage)
-        ) return;
-        stats[entry.stat] = clamp(
-          applyOperation(stats[entry.stat], entry, intensity),
-        );
+        if (!matchesCondition(entry.condition, build, undefined, stage)) return;
+        if (entry.attribute) {
+          champion = applyChampionAttributeDelta(
+            champion,
+            entry.attribute,
+            entry.value * intensity,
+          );
+        }
+        if (entry.stat) {
+          champion.stats[entry.stat] = clamp(
+            applyOperation(champion.stats[entry.stat], entry, intensity),
+          );
+        }
       });
     });
     return {
       ...build,
-      champion: { ...build.champion, stats },
+      champion,
     };
   });
 }

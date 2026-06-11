@@ -1,0 +1,479 @@
+/* Native 125% interface scale. Layout dimensions remain responsive and viewport-bound. */
+
+.site-header,
+.intro,
+.game-layout,
+.review-screen,
+.result-screen,
+.live-match-screen,
+.final-score-screen,
+.rogue-selection-screen {
+  width: var(--ui-content-width);
+}
+
+.site-header {
+  min-height: var(--ui-header-height);
+}
+
+.brand {
+  gap: var(--ui-space-3);
+  font-size: var(--ui-font-md);
+}
+
+.brand__mark {
+  width: calc(38px * var(--ui-scale));
+  height: calc(38px * var(--ui-scale));
+  font-size: calc(20px * var(--ui-scale));
+}
+
+.header-status,
+.step-kicker,
+.eyebrow {
+  font-size: var(--ui-font-xs);
+}
+
+.primary-button,
+.secondary-button {
+  min-height: var(--ui-control-height);
+  padding: var(--ui-space-2) var(--ui-space-4);
+  border-radius: var(--ui-radius-sm);
+  font-size: var(--ui-font-xs);
+}
+
+.panel,
+.draft-board,
+.champion-card,
+.build-summary,
+.simulation-setup,
+.rogue-card,
+.draft-comparison__body {
+  border-radius: var(--ui-radius-md);
+}
+
+.game-layout {
+  grid-template-columns: clamp(270px, 22vw, 362px) minmax(0, 1fr);
+  gap: clamp(18px, 2.2vw, 34px);
+}
+
+.draft-board__header {
+  padding: var(--ui-space-4);
+}
+
+.draft-board__slots {
+  padding: var(--ui-space-2);
+}
+
+.draft-slot {
+  grid-template-columns: calc(44px * var(--ui-scale)) minmax(0, 1fr);
+  gap: var(--ui-space-2);
+  min-height: calc(54px * var(--ui-scale));
+  padding: var(--ui-space-2);
+  border-radius: var(--ui-radius-sm);
+}
+
+.draft-slot__portrait {
+  width: calc(44px * var(--ui-scale));
+  height: calc(44px * var(--ui-scale));
+  border-radius: var(--ui-radius-sm);
+}
+
+.draft-slot span,
+.draft-slot small {
+  font-size: var(--ui-font-2xs);
+}
+
+.draft-slot strong {
+  font-size: var(--ui-font-sm);
+}
+
+.progress-header,
+.review-heading {
+  gap: var(--ui-space-4);
+}
+
+.role-progress {
+  gap: var(--ui-space-2);
+}
+
+.role-progress span {
+  width: calc(30px * var(--ui-scale));
+  height: calc(30px * var(--ui-scale));
+  font-size: var(--ui-font-xs);
+}
+
+.champion-grid {
+  gap: var(--ui-space-2);
+}
+
+.champion-card {
+  border-radius: var(--ui-radius-md);
+}
+
+.champion-card__role,
+.champion-card__difficulty {
+  top: var(--ui-space-2);
+  padding: var(--ui-space-1) var(--ui-space-2);
+  border-radius: var(--ui-radius-sm);
+  font-size: var(--ui-font-2xs);
+}
+
+.champion-card__role {
+  left: var(--ui-space-2);
+}
+
+.champion-card__difficulty {
+  right: var(--ui-space-2);
+}
+
+.champion-card__body {
+  gap: var(--ui-space-1);
+  min-height: calc(132px * var(--ui-scale));
+  padding: var(--ui-space-2) var(--ui-space-3);
+}
+
+.champion-card__body .eyebrow {
+  font-size: var(--ui-font-xs);
+  line-height: 1.25;
+}
+
+.champion-card__body h3 {
+  margin-bottom: var(--ui-space-1);
+  font-size: var(--ui-font-lg);
+}
+
+.champion-card__body > p {
+  min-height: 0;
+  margin: var(--ui-space-1) 0;
+  font-size: var(--ui-font-2xs);
+  line-height: 1.4;
+}
+
+.damage-pill {
+  padding: var(--ui-space-1) var(--ui-space-2);
+  font-size: var(--ui-font-2xs);
+}
+
+.champion-card__attributes,
+.build-summary__attributes {
+  display: flex;
+  min-width: 0;
+  gap: var(--ui-space-1);
+  flex-wrap: wrap;
+}
+
+.champion-card__attributes span,
+.build-summary__attributes span {
+  padding: 3px 6px;
+  border: 1px solid rgba(91, 165, 255, 0.18);
+  border-radius: 999px;
+  color: #b9c9e4;
+  background: rgba(91, 165, 255, 0.06);
+  font-size: var(--ui-font-2xs);
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.champion-card__footer,
+.champion-card__footer strong {
+  font-size: var(--ui-font-2xs);
+}
+
+.build-summary__champion {
+  padding: var(--ui-space-3);
+}
+
+.build-summary__champion h3 {
+  font-size: var(--ui-font-lg);
+}
+
+.build-summary__champion span {
+  font-size: var(--ui-font-xs);
+}
+
+.review-quick-read {
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+}
+
+.review-quick-read > span {
+  padding: var(--ui-space-3);
+}
+
+.run-progress {
+  min-height: calc(40px * var(--ui-scale));
+  padding: var(--ui-space-2) var(--ui-space-3);
+}
+
+.run-progress__steps span,
+.run-progress__status span,
+.run-progress__status strong {
+  font-size: var(--ui-font-2xs);
+}
+
+.rogue-selection-screen {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.rogue-selection-heading {
+  flex: none;
+  margin-bottom: var(--ui-space-2);
+}
+
+.rogue-selection-heading h1 {
+  margin-bottom: var(--ui-space-1);
+  font-size: clamp(34px, 3vw, 55px);
+}
+
+.rogue-selection-heading p:last-child {
+  font-size: var(--ui-font-xs);
+}
+
+.rogue-selection-layout {
+  flex: 1;
+  grid-template-columns:
+    clamp(220px, 16vw, 250px)
+    minmax(0, 1fr)
+    clamp(350px, 27vw, 440px);
+  gap: var(--ui-space-3);
+  min-height: 0;
+}
+
+.rogue-selection-sidebar,
+.rogue-card-options,
+.draft-comparison {
+  min-height: 0;
+}
+
+.rogue-next-match-score,
+.rogue-selection-sidebar .rogue-selection-confirm {
+  padding: var(--ui-space-3);
+}
+
+.rogue-selection-confirm p {
+  font-size: var(--ui-font-2xs);
+}
+
+.rogue-selection-sidebar .rogue-selection-confirm__actions button {
+  min-height: var(--ui-control-height);
+  padding: var(--ui-space-2);
+  font-size: var(--ui-font-2xs);
+}
+
+.rogue-card-options,
+.draft-comparison {
+  grid-template-rows: calc(42px * var(--ui-scale)) minmax(0, 1fr);
+}
+
+.rogue-card-grid {
+  gap: var(--ui-space-2);
+}
+
+.rogue-card {
+  padding: var(--ui-space-3);
+}
+
+.rogue-card__top {
+  font-size: var(--ui-font-2xs);
+}
+
+.rogue-card__sigil {
+  width: calc(52px * var(--ui-scale));
+  height: calc(52px * var(--ui-scale));
+  margin: clamp(14px, 2.5vh, 28px) auto clamp(10px, 2vh, 20px);
+  font-size: var(--ui-font-lg);
+}
+
+.rogue-card h3 {
+  font-size: clamp(20px, 1.45vw, 28px);
+}
+
+.rogue-card > p {
+  min-height: 0;
+  font-size: var(--ui-font-xs);
+  line-height: 1.4;
+}
+
+.rogue-effect-summary {
+  gap: var(--ui-space-1);
+}
+
+.rogue-effect-summary > span,
+.rogue-card__hidden-effect {
+  gap: var(--ui-space-2);
+  font-size: var(--ui-font-xs);
+}
+
+.draft-comparison__body {
+  padding: var(--ui-space-3);
+}
+
+.draft-comparison__heading h2,
+.rogue-card-options__heading h2 {
+  font-size: var(--ui-font-lg);
+}
+
+.draft-comparison__rows {
+  gap: var(--ui-space-1);
+}
+
+.draft-comparison__rows article {
+  grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
+  gap: var(--ui-space-1);
+}
+
+.draft-comparison__pick,
+.draft-comparison__pick--enemy {
+  padding: var(--ui-space-1);
+}
+
+.draft-comparison__pick {
+  grid-template-columns: calc(34px * var(--ui-scale)) minmax(0, 1fr);
+}
+
+.draft-comparison__pick--enemy {
+  grid-template-columns: minmax(0, 1fr) calc(34px * var(--ui-scale));
+}
+
+.draft-comparison__pick img {
+  width: calc(34px * var(--ui-scale));
+  height: calc(34px * var(--ui-scale));
+}
+
+.draft-comparison__pick strong {
+  font-size: var(--ui-font-xs);
+}
+
+.draft-comparison__pick span,
+.draft-comparison__pick small,
+.draft-comparison__teams strong,
+.draft-comparison__versus {
+  font-size: var(--ui-font-2xs);
+}
+
+.draft-comparison__plans {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-space-1);
+  margin-top: var(--ui-space-1);
+}
+
+.draft-comparison__plan {
+  min-width: 0;
+  margin-top: 0;
+  padding: var(--ui-space-2);
+}
+
+.draft-comparison__plan span {
+  font-size: var(--ui-font-2xs);
+}
+
+.draft-comparison__plan strong {
+  display: block;
+  overflow: hidden;
+  font-size: var(--ui-font-xs);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.final-score-card {
+  gap: var(--ui-space-4);
+  padding: var(--ui-space-5);
+  border-radius: var(--ui-radius-lg);
+}
+
+.final-score-grid {
+  gap: var(--ui-space-3);
+}
+
+@media (min-width: 901px) {
+  .app-shell {
+    height: 100dvh;
+  }
+
+  .game-layout,
+  .review-screen,
+  .result-screen,
+  .live-match-screen,
+  .final-score-screen {
+    height: calc(100dvh - var(--ui-header-height) - 8px);
+  }
+
+  .game-layout {
+    margin-top: 8px;
+  }
+
+  .progress-header,
+  .review-heading {
+    min-height: clamp(78px, 11vh, 100px);
+    margin-bottom: var(--ui-space-2);
+  }
+
+  .champion-card__body {
+    min-height: clamp(126px, 18vh, 164px);
+  }
+
+  .rogue-selection-screen {
+    height: calc(100dvh - var(--ui-header-height) - 8px);
+    margin-top: 8px;
+    margin-bottom: 0;
+    overflow: hidden;
+  }
+
+  .rogue-selection-layout {
+    overflow: hidden;
+  }
+
+  .rogue-card-options,
+  .draft-comparison,
+  .rogue-selection-sidebar {
+    height: 100%;
+  }
+}
+
+@media (max-width: 1366px) and (min-width: 901px) {
+  :root {
+    --ui-scale: 1.15;
+  }
+
+  .rogue-selection-layout {
+    grid-template-columns: 210px minmax(0, 1fr) 340px;
+  }
+
+  .rogue-selection-heading h1 {
+    font-size: 36px;
+  }
+
+  .champion-card__body > p {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) and (min-width: 901px) {
+  .rogue-selection-layout {
+    grid-template-columns: 190px minmax(0, 1fr);
+    overflow: auto;
+  }
+
+  .draft-comparison {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .game-layout,
+  .rogue-selection-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .champion-card__body > p {
+    display: block;
+  }
+
+  .draft-comparison__plans {
+    grid-template-columns: 1fr;
+  }
+}

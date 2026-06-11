@@ -9,6 +9,7 @@ import type {
   TeamScore,
 } from "../types/game";
 import { calculateRoleFit } from "./roleEngine";
+import { analyzeTeamIdentity } from "./teamIdentityEngine";
 
 const clamp = (value: number, min = 0, max = 100) =>
   Math.round(Math.max(min, Math.min(max, value)));
@@ -81,7 +82,7 @@ const calculateMetrics = (
     roleFit,
   ]);
 
-  return {
+  const baseMetrics: TeamMetrics = {
     physicalDamage,
     magicDamage,
     frontline,
@@ -112,6 +113,25 @@ const calculateMetrics = (
     splitPush,
     waveClear,
     roleFit,
+  };
+  const identity = analyzeTeamIdentity(team);
+  const profile = identity.attributeProfile;
+  const blend = (current: number, key: keyof typeof profile, weight = 0.22) =>
+    clamp(current * (1 - weight) + (profile[key] ?? current) * weight);
+
+  return {
+    ...baseMetrics,
+    frontline: blend(baseMetrics.frontline, "frontline"),
+    engage: blend(baseMetrics.engage, "engage"),
+    peel: blend(baseMetrics.peel, "peel"),
+    crowdControl: blend(baseMetrics.crowdControl, "crowdControl"),
+    scaling: blend(baseMetrics.scaling, "scaling"),
+    earlyGame: blend(baseMetrics.earlyGame, "earlyGame"),
+    objectiveControl: blend(baseMetrics.objectiveControl, "objectiveControl"),
+    teamFight: blend(baseMetrics.teamFight, "teamFight"),
+    pickoff: blend(baseMetrics.pickoff, "pickoff"),
+    splitPush: blend(baseMetrics.splitPush, "splitPush"),
+    waveClear: blend(baseMetrics.waveClear, "waveClear"),
   };
 };
 
@@ -163,10 +183,15 @@ export function detectTeamArchetype(
   team: DraftTeam,
   difficulty: GameDifficulty = "Classic",
 ): TeamArchetype {
+  if (!team.length) return "Balanced";
+  const identity = analyzeTeamIdentity(team);
   const metrics = calculateMetrics(team, difficulty);
-  return (
+  const legacy = identity.legacyArchetype;
+  const legacyScore = archetypeScores(metrics)[legacy];
+  const strongestLegacy = (
     Object.entries(archetypeScores(metrics)) as [TeamArchetype, number][]
-  ).sort(([, left], [, right]) => right - left)[0][0];
+  ).sort(([, left], [, right]) => right - left)[0];
+  return legacyScore >= strongestLegacy[1] - 8 ? legacy : strongestLegacy[0];
 }
 
 export function calculateSynergyBonus(
@@ -364,17 +389,6 @@ const determineWeaknesses = (metrics: TeamMetrics) => {
   return weaknesses.slice(0, 5);
 };
 
-const winConditions: Record<TeamArchetype, string> = {
-  "Team Fight": "forçar lutas 5v5 com iniciação coordenada",
-  Pickoff: "controlar visão e eliminar alvos isolados",
-  "Split Push": "abrir o mapa com pressão lateral constante",
-  Poke: "desgastar o inimigo antes de disputar objetivos",
-  "Protect the Carry": "proteger o principal carregador durante lutas longas",
-  "Early Snowball": "criar vantagem cedo e acelerar os objetivos",
-  Scaling: "sobreviver ao início e alcançar os picos tardios",
-  Balanced: "adaptar o ritmo e vencer pela consistência",
-};
-
 const roleLevelLabel = {
   Natural: "Natural",
   Flex: "Flexível",
@@ -388,13 +402,17 @@ export function calculateTeamScore(
   difficulty: GameDifficulty = "Classic",
 ): TeamScore {
   const metrics = calculateMetrics(team, difficulty);
+  const identity = analyzeTeamIdentity(team);
   const archetype = detectTeamArchetype(team, difficulty);
   const synergyBonus = calculateSynergyBonus(team, difficulty);
   const damageBalance = clamp(
     100 - Math.abs(metrics.physicalDamage - metrics.magicDamage),
   );
   const championStrength = calculateChampionStrength(team, difficulty);
-  const winConditionClarity = calculateWinConditionClarity(metrics, archetype);
+  const winConditionClarity = clamp(
+    calculateWinConditionClarity(metrics, archetype) * 0.72 +
+      identity.confidence * 0.28,
+  );
   const alternativePlan = Math.max(
     metrics.engage,
     metrics.waveClear,
@@ -429,6 +447,7 @@ export function calculateTeamScore(
     rawTotal,
     scoreCap,
     archetype,
+    identity,
     metrics,
     synergyBonus,
     championStrength,
@@ -436,12 +455,18 @@ export function calculateTeamScore(
     rulesAdaptation: metrics.rulesAdaptation,
     damageBalance,
     winConditionClarity,
-    strengths: determineStrengths(metrics),
-    weaknesses: determineWeaknesses(metrics),
+    strengths: [...new Set([...identity.strengths, ...determineStrengths(metrics)])].slice(0, 5),
+    weaknesses: [...new Set([...identity.weaknesses, ...determineWeaknesses(metrics)])].slice(0, 5),
     warnings: scoreCap.reasons
       .filter((entry) => entry.cap < rawTotal)
       .map((entry) => entry.reason),
     roleWarnings,
-    winCondition: winConditions[archetype],
+    winCondition: `jogar por ${identity.primaryWinCondition.toLowerCase()}${
+      identity.secondaryWinConditions.length
+        ? ` com apoio de ${identity.secondaryWinConditions
+            .map((condition) => condition.toLowerCase())
+            .join(" e ")}`
+        : ""
+    }`,
   };
 }
