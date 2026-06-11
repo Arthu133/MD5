@@ -427,7 +427,7 @@ describe("MD5 roguelike engine", () => {
       );
     });
     expect(matchSimulationTimeBudgetMs).toEqual({
-      Slow: 20_000,
+      Slow: 60_000,
       Normal: 10_000,
       Fast: 5_000,
       UltraFast: 2_000,
