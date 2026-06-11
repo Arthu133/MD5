@@ -145,7 +145,7 @@ function App() {
               <h1 className="md5-title">
                 MD<span>5</span>
               </h1>
-              <h2>Monte seu draft. Acumule regras. Sobreviva ao mata-mata.</h2>
+              <h2>Monte seu draft. Acumule cartas. Sobreviva ao mata-mata.</h2>
               <p>
                 Escolha campeões reais e transforme cada partida com cartas
                 roguelike que permanecem ativas durante todo o torneio.
@@ -163,7 +163,7 @@ function App() {
                   <span>Clássico</span>
                   <small>
                     3 Refresh globais e efeitos detalhados. Ideal para aprender
-                    como as regras alteram o torneio.
+                    como as cartas alteram o torneio.
                   </small>
                 </button>
                 <button
@@ -225,7 +225,7 @@ function App() {
             <article>
               <strong>02</strong>
               <span>Cartas acumulativas</span>
-              <p>Antes de cada jogo, escolha uma entre três regras permanentes.</p>
+              <p>Antes de cada jogo, escolha uma entre três cartas permanentes.</p>
             </article>
             <article>
               <strong>03</strong>
