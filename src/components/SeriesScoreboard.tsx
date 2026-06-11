@@ -25,20 +25,11 @@ export function SeriesScoreboard({
   bestOf = 5,
 }: SeriesScoreboardProps) {
   const winsNeeded = Math.ceil(bestOf / 2);
-  const seriesFinished = userWins >= winsNeeded || enemyWins >= winsNeeded;
-  const winner = userWins > enemyWins ? userTeamName : enemyTeamName;
 
   return (
     <section className="series-scoreboard panel" aria-label="Placar da série">
       <div className="series-scoreboard__heading">
-        <div>
-          <p className="eyebrow">SÉRIE MELHOR DE {bestOf}</p>
-          <h2>
-            {seriesFinished
-              ? `${winner} venceu a série`
-              : `Jogo ${gameNumber} · ${winsNeeded - Math.max(userWins, enemyWins)} vitória(s) para fechar`}
-          </h2>
-        </div>
+        <span>MD{bestOf} · Jogo {gameNumber}</span>
         <strong>
           {userWins} — {enemyWins}
         </strong>

@@ -152,9 +152,6 @@ function App() {
                 MD<span>5</span>
               </h1>
               <h2>Monte seu draft. Acumule regras. Sobreviva ao mata-mata.</h2>
-              <p>
-                Escolha campeões, combine regras caóticas e conquiste a MD5.
-              </p>
               <div
                 className="difficulty-selector"
                 aria-label="Escolha a dificuldade"
@@ -166,10 +163,7 @@ function App() {
                   aria-pressed={difficulty === "Classic"}
                 >
                   <span>Clássico</span>
-                  <small>
-                    3 Refresh globais e efeitos detalhados. Ideal para aprender
-                    como as regras alteram o torneio.
-                  </small>
+                  <small>3 Refresh · efeitos detalhados</small>
                 </button>
                 <button
                   className={`difficulty-card ${difficulty === "Hard" ? "is-selected" : ""}`}
@@ -178,10 +172,7 @@ function App() {
                   aria-pressed={difficulty === "Hard"}
                 >
                   <span>Difícil</span>
-                  <small>
-                    1 Refresh global e análises estratégicas ocultas. Decida pela
-                    leitura, conhecimento e intuição.
-                  </small>
+                  <small>1 Refresh · análises ocultas</small>
                 </button>
               </div>
               <div className="hero-actions">
@@ -237,7 +228,6 @@ function App() {
                   {difficulty === "Hard" ? "DIFÍCIL" : "CLÁSSICO"}
                 </p>
                 <h1>Escolha seu {currentRole}</h1>
-                <p>Dez opções. Uma escolha. Nenhum campeão se repete.</p>
               </div>
               <div className="role-progress">
                 {ROLES.map((role, index) => (
@@ -280,10 +270,6 @@ function App() {
             <div>
               <p className="step-kicker">DRAFT COMPLETO</p>
               <h1>Seu elenco está inscrito.</h1>
-              <p>
-                Nos grupos, você escolhe uma carta por partida. Nas fases MD5,
-                a carta escolhida vale por toda a série.
-              </p>
             </div>
             <div className="review-score">
               <span>
@@ -304,14 +290,6 @@ function App() {
           <div className="review-layout">
             <aside className="review-control-sidebar">
               <div className="simulation-setup panel">
-                <div>
-                  <p className="eyebrow">TRANSMISSÃO DO TORNEIO</p>
-                  <h2>Como você quer acompanhar?</h2>
-                  <p>
-                    A escolha de cartas sempre será manual. O modo define apenas
-                    a passagem entre a partida encerrada e a próxima escolha.
-                  </p>
-                </div>
                 <div className="simulation-option-group">
                   <span>Modo</span>
                   <div className="segmented-control">
@@ -400,11 +378,6 @@ function App() {
                 <section className="blind-review panel">
                   <p className="eyebrow">MODO DIFÍCIL</p>
                   <h2>A leitura estratégica depende de você.</h2>
-                  <p>
-                    Recomendações, comparação de arquétipos e sugestões
-                    permanecem ocultas. As cartas mostram somente seus
-                    modificadores brutos.
-                  </p>
                 </section>
               )}
             </div>

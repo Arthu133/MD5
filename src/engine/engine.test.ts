@@ -37,7 +37,6 @@ import {
   applyRogueCardsToLiveMatch,
   applyRogueCardsToMatchContext,
   applyRogueCardsToTeamScore,
-  getRogueCardMatchupInsight,
   getRandomRogueCardOptions,
   refreshRogueCardOptions,
 } from "./rogueCardEngine";
@@ -424,22 +423,6 @@ describe("MD5 roguelike engine", () => {
       context.enemyTeam?.find((build) => build.role === "Jungle")?.champion
         .stats.objectiveControl,
     ).toBeGreaterThan(originalEnemyJungle.champion.stats.objectiveControl);
-    expect(
-      getRogueCardMatchupInsight(
-        card,
-        enemy.simulatedDraft,
-        enemy.archetype,
-        "Classic",
-      ),
-    ).toBeTruthy();
-    expect(
-      getRogueCardMatchupInsight(
-        card,
-        enemy.simulatedDraft,
-        enemy.archetype,
-        "Hard",
-      ),
-    ).toBeNull();
   });
 
   it("escolhe cartas por partida nos grupos e por série nas MD5", () => {

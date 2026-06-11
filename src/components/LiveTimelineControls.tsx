@@ -5,7 +5,6 @@ type LiveTimelineControlsProps = {
   speed: SimulationSpeed;
   paused: boolean;
   matchFinished: boolean;
-  tickMs: number;
   onModeChange: (mode: SimulationMode) => void;
   onSpeedChange: (speed: SimulationSpeed) => void;
   onTogglePause: () => void;
@@ -25,7 +24,6 @@ export function LiveTimelineControls({
   speed,
   paused,
   matchFinished,
-  tickMs,
   onModeChange,
   onSpeedChange,
   onTogglePause,
@@ -52,11 +50,6 @@ export function LiveTimelineControls({
             Manual
           </button>
         </div>
-        <small>
-          {mode === "Manual"
-            ? "A partida roda sozinha e para antes do próximo jogo."
-            : "O torneio avança sozinho entre as partidas."}
-        </small>
       </div>
       <div className="live-control-group live-speed-control">
         <span>Velocidade</span>
@@ -72,7 +65,6 @@ export function LiveTimelineControls({
             </button>
           ))}
         </div>
-        <small>{tickMs} ms por minuto visualizado</small>
       </div>
       <div className="live-control-actions">
         {!matchFinished ? (

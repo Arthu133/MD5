@@ -4235,7 +4235,9 @@ strong {
 /* Series context and compact draft density */
 
 .series-scoreboard {
+  width: min(760px, 100%);
   margin-bottom: 16px;
+  margin-inline: auto;
   padding: 18px 22px;
   border-color: rgba(228, 184, 95, 0.28);
   background:
@@ -4250,6 +4252,14 @@ strong {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
+}
+
+.series-scoreboard__heading > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .series-scoreboard__heading h2 {
@@ -4303,6 +4313,16 @@ strong {
   background: #ff7d8d;
   box-shadow: 0 0 12px rgba(255, 111, 126, 0.5);
   opacity: 1;
+}
+
+.match-next-action {
+  display: flex;
+  justify-content: center;
+  margin: -4px 0 12px;
+}
+
+.match-next-action .primary-button {
+  min-width: min(320px, 100%);
 }
 
 .mini-map-canvas {

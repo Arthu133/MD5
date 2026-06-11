@@ -20,17 +20,6 @@ export function DraftComparisonPanel({
 }: DraftComparisonPanelProps) {
   return (
     <section className="draft-comparison">
-      <div className="draft-comparison__heading">
-        <div>
-          <p className="eyebrow">
-            {difficulty === "Classic"
-              ? "LEITURA ESTRATÉGICA"
-              : "DRAFTS DA PARTIDA"}
-          </p>
-          <h2>Comparação dos drafts</h2>
-        </div>
-      </div>
-
       <div className="draft-comparison__body panel">
         <div className="draft-comparison__teams">
           <strong>Seu Draft</strong>

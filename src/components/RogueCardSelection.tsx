@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { getRogueCardMatchupInsight } from "../engine/rogueCardEngine";
 import type {
   ActiveRogueCard,
   CompetitiveEnemyTeam,
@@ -56,15 +55,6 @@ export function RogueCardSelection({
   const gameNumber = isGroupStage
     ? matchNumber
     : seriesUserWins + seriesEnemyWins + 1;
-  const matchupInsight = selected
-    ? getRogueCardMatchupInsight(
-        selected,
-        enemy.simulatedDraft,
-        enemy.archetype,
-        difficulty,
-      )
-    : null;
-
   return (
     <main className="rogue-selection-screen">
       <RunProgress
@@ -82,20 +72,6 @@ export function RogueCardSelection({
             PRÓXIMA PARTIDA · {stageLabels[stage]}
           </p>
           <h1>Escolha a regra que pode decidir o jogo.</h1>
-          <p>
-            {difficulty === "Classic" ? (
-              <>
-                Compare seu draft com <strong>{enemy.name}</strong> antes de
-                decidir.
-              </>
-            ) : (
-              <>
-                <strong>{enemy.name}</strong> está definido. Decida pelos
-                modificadores brutos da regra.
-              </>
-            )}{" "}
-            {!isGroupStage ? "A escolha vale por toda esta série MD5." : null}
-          </p>
         </div>
       </section>
 
@@ -113,7 +89,6 @@ export function RogueCardSelection({
             <div>
               <span>Carta escolhida</span>
               <strong>{selected?.name ?? "Selecione uma das três opções"}</strong>
-              {matchupInsight ? <p>{matchupInsight}</p> : null}
             </div>
             <div className="rogue-selection-confirm__actions">
               <button
@@ -141,7 +116,6 @@ export function RogueCardSelection({
         <section className="rogue-card-options">
           <div className="rogue-card-options__heading">
             <p className="eyebrow">ESCOLHA 1 DE 3</p>
-            <h2>Regras disponíveis</h2>
           </div>
           <div className="rogue-card-grid">
             {options.map((card) => (

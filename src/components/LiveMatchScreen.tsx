@@ -8,13 +8,11 @@ import type {
   SimulationMode,
   SimulationSpeed,
 } from "../types/game";
-import { CurrentEventSummary } from "./CurrentEventSummary";
 import { LiveEventFeed } from "./LiveEventFeed";
 import { LiveMiniMap } from "./LiveMiniMap";
 import { LiveObjectivePanel } from "./LiveObjectivePanel";
 import { LiveScoreboard } from "./LiveScoreboard";
 import { LiveTimelineControls } from "./LiveTimelineControls";
-import { MatchSummaryCard } from "./MatchSummaryCard";
 import { SeriesScoreboard } from "./SeriesScoreboard";
 import { TournamentProgress } from "./TournamentProgress";
 
@@ -33,10 +31,9 @@ export function LiveMatchScreen({
 }: LiveMatchScreenProps) {
   const queue = useMemo(
     () =>
-      result.series.flatMap((series, seriesIndex) =>
+      result.series.flatMap((series) =>
         series.games.map((match, gameIndex) => ({
           series,
-          seriesIndex,
           gameIndex,
           match,
           simulation: match.liveSimulation,
@@ -107,7 +104,6 @@ export function LiveMatchScreen({
       return () => window.clearTimeout(timer);
     }
     if (mode === "Manual") return;
-
     const timer = window.setTimeout(
       goToNextMatch,
       Math.max(500, Math.min(1_800, tickMs * 3)),
@@ -156,28 +152,26 @@ export function LiveMatchScreen({
           gameNumber={current.gameIndex + 1}
         />
       ) : null}
+      {matchFinished ? (
+        <div className="match-next-action">
+          <button
+            className="primary-button primary-button--large"
+            type="button"
+            onClick={goToNextMatch}
+          >
+            {nextLabel}
+          </button>
+        </div>
+      ) : null}
       <div className="simulation-layout">
         <div className="simulation-layout__info">
           <LiveScoreboard simulation={simulation} stats={currentStats} />
-          <CurrentEventSummary events={visibleEvents} currentMinute={minute} />
           <LiveObjectivePanel stats={currentStats} />
-          {matchFinished ? (
-            <MatchSummaryCard
-              simulation={simulation}
-              stats={currentStats}
-              winner={simulation.finalWinner}
-              seriesUserWins={seriesUserWins}
-              seriesEnemyWins={seriesEnemyWins}
-              nextLabel={nextLabel}
-              onNext={goToNextMatch}
-            />
-          ) : null}
           <LiveTimelineControls
             mode={mode}
             speed={speed}
             paused={paused}
             matchFinished={matchFinished}
-            tickMs={tickMs}
             onModeChange={(nextMode) => {
               setMode(nextMode);
               setPaused(false);
@@ -198,10 +192,7 @@ export function LiveMatchScreen({
           />
         </div>
       </div>
-      <LiveEventFeed
-        events={simulation.events}
-        currentMinute={minute}
-      />
+      <LiveEventFeed events={simulation.events} currentMinute={minute} />
     </main>
   );
 }

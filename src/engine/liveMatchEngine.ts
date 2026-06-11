@@ -827,53 +827,6 @@ export function calculateProfessionalGameDuration(
   return Math.round(clamp(duration, 18, 55));
 }
 
-const summaryPriority: Record<LiveMatchEvent["type"], number> = {
-  GameEnd: 100,
-  Ace: 95,
-  BaronTaken: 90,
-  ObjectiveSteal: 88,
-  InhibitorDestroyed: 85,
-  DragonTaken: 80,
-  TeamFight: 75,
-  TowerDestroyed: 65,
-  FirstBlood: 60,
-  Kill: 50,
-  GoldLead: 40,
-  MapPressure: 30,
-  HeraldTaken: 55,
-  PowerSpike: 35,
-  Assist: 10,
-  Death: 10,
-};
-
-export function generateCurrentEventSummary(
-  visibleEvents: LiveMatchEvent[],
-  currentMinute: number,
-): string {
-  const recentEvents = visibleEvents
-    .filter(
-      (event) =>
-        event.minute <= currentMinute && event.minute >= currentMinute - 2,
-    )
-    .sort(
-      (left, right) =>
-        summaryPriority[right.type] - summaryPriority[left.type] ||
-        right.minute - left.minute,
-    );
-  const event = recentEvents[0];
-
-  if (event) {
-    return `Minuto ${currentMinute} — ${event.description}`;
-  }
-  if (currentMinute < 8) {
-    return `Minuto ${currentMinute} — As equipes disputam espaço nas rotas e visão no rio.`;
-  }
-  if (currentMinute < 22) {
-    return `Minuto ${currentMinute} — O jogo segue equilibrado enquanto os times preparam o próximo objetivo.`;
-  }
-  return `Minuto ${currentMinute} — As equipes avançam a visão e procuram uma luta capaz de decidir o mapa.`;
-}
-
 export function formatGoldDifference(
   userGold: number,
   enemyGold: number,

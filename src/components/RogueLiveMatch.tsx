@@ -7,13 +7,11 @@ import type {
   SimulationSpeed,
 } from "../types/game";
 import { ActiveRogueCardsPanel } from "./ActiveRogueCardsPanel";
-import { CurrentEventSummary } from "./CurrentEventSummary";
 import { LiveEventFeed } from "./LiveEventFeed";
 import { LiveMiniMap } from "./LiveMiniMap";
 import { LiveObjectivePanel } from "./LiveObjectivePanel";
 import { LiveScoreboard } from "./LiveScoreboard";
 import { LiveTimelineControls } from "./LiveTimelineControls";
-import { MatchSummaryCard } from "./MatchSummaryCard";
 import { RunProgress } from "./RunProgress";
 import { SeriesScoreboard } from "./SeriesScoreboard";
 
@@ -116,8 +114,8 @@ export function RogueLiveMatch({
         difficulty={difficulty}
         stage={match.stage}
         matchNumber={match.gameNumber}
-        seriesUserWins={seriesUserWins}
-        seriesEnemyWins={seriesEnemyWins}
+        seriesUserWins={matchFinished ? finalUserWins : seriesUserWins}
+        seriesEnemyWins={matchFinished ? finalEnemyWins : seriesEnemyWins}
         activeCards={match.activeCards?.length ?? 0}
       />
       <div className="rogue-live-heading panel">
@@ -125,37 +123,35 @@ export function RogueLiveMatch({
           <p className="eyebrow">TORNEIO EM ANDAMENTO</p>
           <h2>{simulation.gameLabel}</h2>
         </div>
-        <span>Jogo {match.matchNumber}</span>
+        <span>Jogo {match.gameNumber}</span>
       </div>
       {match.stage !== "Groups" ? (
         <SeriesScoreboard
           userTeamName={simulation.userTeamName}
           enemyTeamName={simulation.enemyName}
-          userWins={seriesUserWins}
-          enemyWins={seriesEnemyWins}
+          userWins={matchFinished ? finalUserWins : seriesUserWins}
+          enemyWins={matchFinished ? finalEnemyWins : seriesEnemyWins}
           gameNumber={match.gameNumber}
         />
       ) : null}
+      {matchFinished ? (
+        <div className="match-next-action">
+          <button
+            className="primary-button primary-button--large"
+            type="button"
+            onClick={onContinue}
+          >
+            {nextLabel}
+          </button>
+        </div>
+      ) : null}
       <div className="simulation-shell">
         <aside className="live-control-sidebar">
-          {matchFinished ? (
-            <MatchSummaryCard
-              simulation={simulation}
-              stats={currentStats}
-              winner={simulation.finalWinner}
-              seriesUserWins={finalUserWins}
-              seriesEnemyWins={finalEnemyWins}
-              nextLabel={nextLabel}
-              onNext={onContinue}
-              compact
-            />
-          ) : null}
           <LiveTimelineControls
             mode={mode}
             speed={speed}
             paused={paused}
             matchFinished={matchFinished}
-            tickMs={tickMs}
             onModeChange={(nextMode) => {
               onModeChange(nextMode);
               setPaused(false);
@@ -173,7 +169,6 @@ export function RogueLiveMatch({
               compact
             />
             <LiveScoreboard simulation={simulation} stats={currentStats} />
-            <CurrentEventSummary events={visibleEvents} currentMinute={minute} />
             <LiveObjectivePanel stats={currentStats} />
           </div>
           <div className="simulation-layout__map">

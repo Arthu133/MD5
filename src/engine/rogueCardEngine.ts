@@ -5,7 +5,6 @@ import type {
   ChampionBuild,
   CompetitiveEnemyTeam,
   DraftTeam,
-  GameDifficulty,
   MatchContext,
   RogueCard,
   RogueCardCondition,
@@ -354,61 +353,6 @@ export function applyRogueCardsToMatchContext(
     activeCards,
     rogueModifiers: getRogueRuleModifiers(activeCards),
   };
-}
-
-const average = (values: number[]) =>
-  values.length
-    ? values.reduce((total, value) => total + value, 0) / values.length
-    : 0;
-
-export function getRogueCardMatchupInsight(
-  card: RogueCard,
-  enemyTeam: DraftTeam,
-  enemyArchetype: TeamScore["archetype"],
-  difficulty: GameDifficulty,
-): string | null {
-  if (difficulty === "Hard") return null;
-  const enemyScore = calculateTeamScore(enemyTeam, "Classic");
-  const tankCount = enemyTeam.filter(
-    ({ champion }) =>
-      champion.classes.includes("Tank") || champion.stats.tankiness >= 65,
-  ).length;
-  const sustain = average(
-    enemyTeam.map(({ champion }) => champion.stats.sustain),
-  );
-  const engage = enemyScore.metrics.engage;
-  const scaling = enemyScore.metrics.scaling;
-  if (card.id === "anti-tank-meta" && tankCount >= 2) {
-    return "Boa contra a frontline resistente do adversário.";
-  }
-  if (card.id === "anti-cura-meta" && sustain >= 52) {
-    return "Boa contra o sustain do adversário.";
-  }
-  if (
-    ["meta-agressivo", "sem-paciencia", "power-spike-cedo"].includes(card.id) &&
-    scaling >= 62
-  ) {
-    return "Acelera a partida contra um adversário de scaling.";
-  }
-  if (
-    ["escudos-fortes", "protect-the-carry"].includes(card.id) &&
-    engage >= 55
-  ) {
-    return "Protege seus carries contra engage forte.";
-  }
-  if (card.id === "dive-meta" && enemyArchetype === "Poke") {
-    return "Dive ajuda a alcançar uma composição de poke.";
-  }
-  if (
-    card.tags.includes("objective") &&
-    enemyScore.metrics.objectiveControl >= 58
-  ) {
-    return "Objetivos ficarão ainda mais disputados.";
-  }
-  if (card.tags.includes("late") && scaling >= 62) {
-    return "Os dois times ganham mais valor no late game.";
-  }
-  return `Regra global: favorece quem usa melhor ${card.tags[0] ?? enemyArchetype}.`;
 }
 
 export function applyRogueCardsToLiveMatch(
