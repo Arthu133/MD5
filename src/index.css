@@ -4235,9 +4235,8 @@ strong {
 /* Series context and compact draft density */
 
 .series-scoreboard {
-  width: min(760px, 100%);
+  width: 100%;
   margin-bottom: 16px;
-  margin-inline: auto;
   padding: 18px 22px;
   border-color: rgba(228, 184, 95, 0.28);
   background:
