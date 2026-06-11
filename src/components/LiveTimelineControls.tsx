@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { SimulationMode, SimulationSpeed } from "../types/game";
 
 type LiveTimelineControlsProps = {
@@ -10,6 +11,7 @@ type LiveTimelineControlsProps = {
   onTogglePause: () => void;
   onSkipMatch: () => void;
   onSkipTournament: () => void;
+  footer?: ReactNode;
 };
 
 const speedLabels: Record<SimulationSpeed, string> = {
@@ -29,6 +31,7 @@ export function LiveTimelineControls({
   onTogglePause,
   onSkipMatch,
   onSkipTournament,
+  footer,
 }: LiveTimelineControlsProps) {
   return (
     <section className="live-controls panel">
@@ -87,6 +90,7 @@ export function LiveTimelineControls({
           Pular torneio
         </button>
       </div>
+      {footer}
     </section>
   );
 }

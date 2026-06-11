@@ -165,7 +165,11 @@ export function LiveMatchScreen({
       ) : null}
       <div className="simulation-layout">
         <div className="simulation-layout__info">
-          <LiveScoreboard simulation={simulation} stats={currentStats} />
+          <LiveScoreboard
+            simulation={simulation}
+            stats={currentStats}
+            result={matchFinished ? simulation.finalWinner : undefined}
+          />
           <LiveObjectivePanel stats={currentStats} />
           <LiveTimelineControls
             mode={mode}

@@ -134,17 +134,6 @@ export function RogueLiveMatch({
           gameNumber={match.gameNumber}
         />
       ) : null}
-      {matchFinished ? (
-        <div className="match-next-action">
-          <button
-            className="primary-button primary-button--large"
-            type="button"
-            onClick={onContinue}
-          >
-            {nextLabel}
-          </button>
-        </div>
-      ) : null}
       <div className="simulation-shell">
         <aside className="live-control-sidebar">
           <LiveTimelineControls
@@ -160,6 +149,19 @@ export function RogueLiveMatch({
             onTogglePause={() => setPaused((current) => !current)}
             onSkipMatch={() => setMinute(simulation.durationMinutes)}
             onSkipTournament={onSkipTournament}
+            footer={
+              matchFinished ? (
+                <div className="match-next-action match-next-action--sidebar">
+                  <button
+                    className="primary-button primary-button--large"
+                    type="button"
+                    onClick={onContinue}
+                  >
+                    {nextLabel}
+                  </button>
+                </div>
+              ) : null
+            }
           />
         </aside>
         <div className="simulation-layout">
@@ -168,7 +170,11 @@ export function RogueLiveMatch({
               activeCards={match.activeCards ?? []}
               compact
             />
-            <LiveScoreboard simulation={simulation} stats={currentStats} />
+            <LiveScoreboard
+              simulation={simulation}
+              stats={currentStats}
+              result={matchFinished ? simulation.finalWinner : undefined}
+            />
             <LiveObjectivePanel stats={currentStats} />
           </div>
           <div className="simulation-layout__map">

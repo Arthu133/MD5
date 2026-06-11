@@ -1,9 +1,14 @@
-import type { LiveMatchSimulation, LiveMatchStats } from "../types/game";
+import type {
+  LiveMatchSimulation,
+  LiveMatchStats,
+  MatchSide,
+} from "../types/game";
 import { GoldDifferenceBadge } from "./GoldDifferenceBadge";
 
 type LiveScoreboardProps = {
   simulation: LiveMatchSimulation;
   stats: LiveMatchStats;
+  result?: MatchSide;
 };
 
 const formatGold = (gold: number) => `${(gold / 1000).toFixed(1)}k ouro`;
@@ -14,9 +19,17 @@ const phaseLabel = (minute: number) =>
 export function LiveScoreboard({
   simulation,
   stats,
+  result,
 }: LiveScoreboardProps) {
+  const resultClass =
+    result === "User"
+      ? " live-scoreboard--victory"
+      : result === "Enemy"
+        ? " live-scoreboard--defeat"
+        : "";
+
   return (
-    <section className="live-scoreboard panel">
+    <section className={`live-scoreboard panel${resultClass}`}>
       <div className="live-scoreboard__meta">
         <span>{simulation.gameLabel}</span>
         <small>{phaseLabel(stats.minute)}</small>
