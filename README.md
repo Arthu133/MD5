@@ -69,83 +69,117 @@ partidas. A velocidade da transmissão pode ser alterada durante o jogo:
 | Normal | 10 segundos |
 | Devagar | 1 minuto |
 
-## Executando localmente
+## Montando o draft
 
-### Requisitos
+O time possui cinco posições:
 
-- Node.js
-- npm
+- **Top**
+- **Jungle**
+- **Mid**
+- **Carry**
+- **Support**
 
-### Instalação
+Em cada etapa são oferecidos 10 campeões adequados à posição atual. Campeões já
+escolhidos não aparecem novamente no mesmo time.
 
-```bash
-git clone https://github.com/Arthu133/MD5.git
-cd MD5
-npm install
-npm run dev
-```
+Cada card apresenta informações como classes, perfil de dano e uma descrição
+do estilo do campeão. Depois da confirmação, a classe principal também aparece
+no painel **Seu elenco**.
 
-O Vite exibirá no terminal o endereço local da aplicação.
+## Avaliação da composição
 
-### Testes e build
+Depois das cinco escolhas, o jogo analisa o draft como um conjunto. Entre os
+aspectos considerados estão:
 
-```bash
-npm test
-npm run build
-npm run preview
-```
+- encaixe dos campeões nas posições;
+- equilíbrio entre dano físico e mágico;
+- frontline, engage e peel;
+- controle de grupo e wave clear;
+- força no início e no fim da partida;
+- controle de objetivos;
+- consistência e dificuldade de execução;
+- clareza da condição de vitória.
 
-O build de produção é gerado em `dist/`. O projeto inclui configuração para
-deploy na Vercel.
+Uma composição pode ter campeões fortes individualmente e ainda receber uma
+avaliação menor caso possua problemas estruturais, como falta de dano,
+frontline, iniciação ou controle de objetivos.
 
-## Tecnologias
+## Arquétipos
 
-- React 19
-- TypeScript
-- Vite
-- Vitest
-- Data Dragon
-- Vercel
+O estilo principal da composição é identificado a partir de suas maiores
+forças. Os arquétipos incluem:
 
-## Estrutura do projeto
+- **Team Fight:** busca lutas em equipe e controle de área.
+- **Pickoff:** procura eliminar alvos isolados.
+- **Split Push:** pressiona diferentes partes do mapa.
+- **Poke:** enfraquece o adversário antes da luta.
+- **Protect the Carry:** protege uma fonte principal de dano.
+- **Early Snowball:** tenta construir vantagem cedo.
+- **Scaling:** busca chegar forte ao fim da partida.
+- **Balanced:** combina diferentes ferramentas sem depender de uma única.
 
-```text
-src/components   Componentes da interface
-src/data         Campeões, cartas, itens e dados competitivos
-src/engine       Draft, pontuação, adversários, campanha e simulação
-src/types        Tipos compartilhados
-scripts          Sincronização e ferramentas auxiliares
-docs             Documentação técnica
-```
+Os confrontos entre arquétipos influenciam as partidas, mas não determinam o
+resultado sozinhos.
 
-Uma descrição detalhada dos cálculos e sistemas está disponível em
-[docs/MOTOR_DO_JOGO.md](docs/MOTOR_DO_JOGO.md).
+## Adversários
 
-## Atualização dos dados
+Cada adversário recebe uma organização, um draft e um plano estratégico. A
+força das equipes aumenta conforme a campanha avança.
 
-Para sincronizar o catálogo de campeões com o Data Dragon:
+O jogo compara os dois drafts antes da escolha da carta, permitindo observar
+classes, perfis de dano, posições e o plano esperado do oponente.
 
-```bash
-npm run sync:champions
-```
+Adversários podem explorar fraquezas como:
 
-Para regenerar os ícones fictícios dos itens:
+- falta de frontline ou proteção;
+- baixo controle de objetivos;
+- pouca pressão no início;
+- composição previsível;
+- ausência de wave clear;
+- excesso de dano de um único tipo.
 
-```bash
-npm run generate:item-icons
-```
+## Fase de grupos
 
-## Contribuindo
+A campanha começa com três partidas independentes. É necessário vencer pelo
+menos duas para avançar às eliminatórias.
 
-Contribuições são bem-vindas. Para propor uma alteração:
+Antes de cada partida da fase de grupos, três cartas são apresentadas e uma
+delas deve ser escolhida.
 
-1. Faça um fork do repositório.
-2. Crie uma branch para sua mudança.
-3. Execute `npm test` e `npm run build`.
-4. Abra um pull request explicando o problema e a solução.
+## Eliminatórias MD5
 
-Ao contribuir, mantenha mudanças de interface, balanceamento e motor bem
-separadas sempre que possível.
+As eliminatórias possuem:
+
+1. Quartas de final
+2. Semifinal
+3. Final MD5
+
+Cada confronto é uma série melhor de cinco. O primeiro lado a alcançar três
+vitórias avança.
+
+Uma carta é escolhida antes do início de cada série e permanece válida durante
+todos os jogos daquela MD5. Ao avançar para a série seguinte, uma nova escolha
+é realizada.
+
+## Resultado das partidas
+
+As partidas consideram a qualidade e a coerência dos dois drafts, o confronto
+entre arquétipos, as cartas ativas, a dificuldade, a fase do torneio e uma
+parcela controlada de variação.
+
+Durante a transmissão são apresentados:
+
+- placar de abates;
+- diferença de ouro;
+- dragões e Barão;
+- torres, inibidores e Nexus;
+- eventos importantes;
+- movimentação e pressão no mini mapa;
+- histórico de partidas e placar da série.
+
+Nenhuma composição possui vitória absolutamente garantida. Boas decisões de
+draft e cartas aumentam as chances, mas cada confronto ainda pode produzir uma
+história diferente.
 
 ## Aviso legal
 
