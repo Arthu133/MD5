@@ -38,7 +38,11 @@ export function DraftBoard({ team, currentRole }: DraftBoardProps) {
               <div>
                 <span>{role}</span>
                 <strong>{build?.champion.name ?? (currentRole === role ? "Escolhendo..." : "Vazio")}</strong>
-                {build ? <small>Campeão confirmado</small> : null}
+                {build ? (
+                  <small>
+                    {build.champion.classes[0] ?? "Campeão confirmado"}
+                  </small>
+                ) : null}
               </div>
             </div>
           );
