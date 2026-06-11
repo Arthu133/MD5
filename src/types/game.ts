@@ -134,6 +134,7 @@ export type ChampionProfile = {
   damageProfile: DamageProfile;
   difficulty: number;
   stats: StrategicStats;
+  attributeTags: ChampionAttributeKey[];
   attributes: ChampionAttribute[];
   tags: string[];
   itemPreferences: ItemPreferences;
@@ -315,12 +316,14 @@ export type TeamArchetype =
 
 export type WinConditionKey =
   | "Early Snowball"
-  | "Late Game Scaling"
+  | "Scaling"
   | "Team Fight 5v5"
+  | "Hard Engage"
+  | "Wombo Combo"
   | "Split Push"
   | "Pickoff"
   | "Poke / Siege"
-  | "Dive / Engage"
+  | "Dive"
   | "Protect the Carry"
   | "Objective Control"
   | "Dragon Stacking"
@@ -329,10 +332,10 @@ export type WinConditionKey =
   | "Side Lane Pressure"
   | "Skirmish"
   | "Vision Control"
-  | "Comeback Scaling"
-  | "Burst / Pick"
+  | "Comeback"
+  | "Burst Composition"
   | "Sustain Fight"
-  | "Anti-Tank Scaling"
+  | "Anti-Tank"
   | "Map Pressure";
 
 export type TeamIdentity = {
@@ -346,6 +349,7 @@ export type TeamIdentity = {
   confidence: number;
   scores: Record<WinConditionKey, number>;
   attributeProfile: Partial<Record<ChampionAttributeKey, number>>;
+  topAttributes: ChampionAttribute[];
   legacyArchetype: TeamArchetype;
 };
 

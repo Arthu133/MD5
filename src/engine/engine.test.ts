@@ -3,7 +3,10 @@ import {
   championAttributeValidationErrors,
   championProfiles,
 } from "../data/champions/championProfiles";
-import { getChampionAttributeValue } from "../data/champions/championAttributes";
+import {
+  getChampionAttributeValue,
+  getTopChampionAttributes,
+} from "../data/champions/championAttributes";
 import { generatedChampions } from "../data/champions/generatedChampions";
 import { rogueCards } from "../data/rogueCards";
 import type { DraftTeam, Role } from "../types/game";
@@ -66,9 +69,14 @@ const createTeam = (
 describe("MD5 roguelike engine", () => {
   it("validates individual attributes and distinct win conditions", () => {
     expect(championAttributeValidationErrors).toEqual([]);
+    expect(championProfiles).toHaveLength(172);
     expect(
       championProfiles.every((champion) => champion.attributes.length >= 5),
     ).toBe(true);
+    expect(
+      championProfiles.every((champion) => champion.attributeTags.length >= 5),
+    ).toBe(true);
+    expect(getTopChampionAttributes(getChampion("Trundle"))).toHaveLength(3);
     const trundle = getChampion("Trundle");
     expect(getChampionAttributeValue(trundle, "antiTank")).toBeGreaterThanOrEqual(
       90,
@@ -85,6 +93,68 @@ describe("MD5 roguelike engine", () => {
       sideLane.primaryWinCondition,
     );
     expect(sideLane.secondaryWinConditions.length).toBeGreaterThan(0);
+  });
+
+  it("reads composition plans from contributors and required structure", () => {
+    const scalingProtect = analyzeTeamIdentity(
+      createTeam(["Ornn", "Vi", "Orianna", "Jinx", "Lulu"]),
+    );
+    expect(scalingProtect.primaryWinCondition).toBe("Scaling");
+    expect(scalingProtect.scores["Protect the Carry"]).toBeGreaterThanOrEqual(60);
+
+    const earlyEngage = analyzeTeamIdentity(
+      createTeam(["Renekton", "LeeSin", "Pantheon", "Draven", "Nautilus"]),
+    );
+    expect(["Early Snowball", "Dive", "Hard Engage"]).toContain(
+      earlyEngage.primaryWinCondition,
+    );
+    expect(earlyEngage.primaryWinCondition).not.toBe("Scaling");
+    expect(earlyEngage.primaryWinCondition).not.toBe("Comeback");
+
+    const splitMap = analyzeTeamIdentity(
+      createTeam(["Fiora", "Nidalee", "TwistedFate", "Ezreal", "Bard"]),
+    );
+    const splitMapPlans = Object.entries(splitMap.scores)
+      .sort(([, left], [, right]) => right - left)
+      .slice(0, 4)
+      .map(([condition]) => condition);
+    expect(splitMapPlans).toEqual(
+      expect.arrayContaining(["Split Push", "Map Pressure", "Pickoff"]),
+    );
+
+    const pokeSiege = analyzeTeamIdentity(
+      createTeam(["Jayce", "Nidalee", "Xerath", "Caitlyn", "Karma"]),
+    );
+    expect(pokeSiege.primaryWinCondition).toBe("Poke / Siege");
+
+    const womboCombo = analyzeTeamIdentity(
+      createTeam(["Malphite", "JarvanIV", "Orianna", "MissFortune", "Leona"]),
+    );
+    expect(womboCombo.primaryWinCondition).toBe("Wombo Combo");
+    expect(womboCombo.secondaryWinConditions).toEqual(
+      expect.arrayContaining(["Team Fight 5v5", "Hard Engage"]),
+    );
+
+    const protectCarry = analyzeTeamIdentity(
+      createTeam(["Ornn", "Ivern", "Orianna", "KogMaw", "Janna"]),
+    );
+    const protectPlans = Object.entries(protectCarry.scores)
+      .sort(([, left], [, right]) => right - left)
+      .slice(0, 3)
+      .map(([condition]) => condition);
+    expect(protectPlans).toEqual(
+      expect.arrayContaining(["Scaling", "Protect the Carry", "Front-to-Back"]),
+    );
+
+    const primaryPlans = [
+      scalingProtect,
+      earlyEngage,
+      splitMap,
+      pokeSiege,
+      womboCombo,
+      protectCarry,
+    ].map((identity) => identity.primaryWinCondition);
+    expect(new Set(primaryPlans).size).toBeGreaterThanOrEqual(5);
   });
 
   it("mantém campeões e todas as cartas pedidas", () => {

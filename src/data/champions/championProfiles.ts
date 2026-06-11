@@ -8,7 +8,7 @@ import type {
 } from "../../types/game";
 import { championRoleOverrides } from "./championRoleOverrides";
 import {
-  buildChampionAttributes,
+  buildChampionIdentity,
   validateChampionAttributes,
 } from "./championAttributes";
 import { generatedChampions } from "./generatedChampions";
@@ -262,6 +262,12 @@ export const championProfiles: ChampionProfile[] = generatedChampions.map((champ
   const damageProfile = inferDamageProfile(champion.id, champion.tags, classes);
   const stats = adjustStats(champion.id, roles, classes, averageStats(classes));
   const difficulty = champion.difficulty || 5;
+  const identity = buildChampionIdentity({
+    id: champion.id,
+    roles,
+    classes,
+    stats,
+  });
 
   return {
     ...champion,
@@ -271,12 +277,8 @@ export const championProfiles: ChampionProfile[] = generatedChampions.map((champ
     damageProfile,
     difficulty,
     stats,
-    attributes: buildChampionAttributes({
-      id: champion.id,
-      roles,
-      classes,
-      stats,
-    }),
+    attributeTags: identity.tags,
+    attributes: identity.weights,
     tags: [
       ...champion.tags.map((tag) => tag.toLowerCase()),
       ...(pokeChampions.has(champion.id) ? ["poke"] : []),

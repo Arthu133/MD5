@@ -129,8 +129,12 @@ const addStatAttributes = (
   add(values, "utility", stats.utility);
   add(values, "dps", Math.max(stats.damageAD, stats.damageAP) * 0.62 + stats.scaling * 0.38);
   add(values, "snowball", stats.earlyPressure * 0.6 + stats.pickoff * 0.4);
-  add(values, "lateGame", stats.scaling * 0.72 + stats.teamFight * 0.28);
-  add(values, "comeback", stats.scaling * 0.55 + stats.waveClear * 0.45);
+  if (stats.scaling >= 62) {
+    add(values, "lateGame", stats.scaling * 0.78 + stats.teamFight * 0.22);
+  }
+  if (stats.scaling >= 70 && stats.waveClear >= 55) {
+    add(values, "comeback", stats.scaling * 0.58 + stats.waveClear * 0.42);
+  }
   add(values, "backline", Math.max(stats.damageAD, stats.damageAP) * 0.55 + stats.scaling * 0.45);
 };
 
@@ -144,31 +148,54 @@ const championOverrides: Record<string, Partial<Record<ChampionAttributeKey, num
     antiTank: 92,
     objectiveControl: 82,
   },
-  Malphite: { tank: 92, engage: 95, teamFight: 92, frontline: 93, antiTank: 76 },
+  Malphite: { tank: 92, engage: 97, teamFight: 94, frontline: 93, crowdControl: 90, burst: 78, antiTank: 76 },
   Fiora: { duelist: 98, splitPush: 96, antiTank: 92, sustain: 76, teamFight: 38 },
   Jinx: { hypercarry: 96, scaling: 94, dps: 94, resetChampion: 92, siege: 85 },
   Nidalee: { poke: 91, junglePressure: 90, mobility: 88, snowball: 86, objectiveControl: 68 },
-  Orianna: { teamFight: 91, zoneControl: 88, protectCarry: 82, scaling: 86, crowdControl: 84 },
+  Orianna: { teamFight: 93, zoneControl: 90, protectCarry: 82, scaling: 86, crowdControl: 87, burst: 78 },
   Bard: { roaming: 96, utility: 91, pickoff: 82, visionControl: 86, highRisk: 74 },
-  KogMaw: { hypercarry: 97, antiTank: 94, dps: 96, longRange: 86, lowRange: 30 },
+  KogMaw: { hypercarry: 97, scaling: 95, lateGame: 96, antiTank: 94, dps: 96, longRange: 86, lowRange: 30 },
   LeeSin: { junglePressure: 94, earlyGame: 91, mobility: 94, dive: 86, scaling: 38 },
   Soraka: { healing: 99, sustain: 95, protectCarry: 92, utility: 94, globalPressure: 80 },
+  Ornn: { tank: 94, frontline: 96, engage: 88, crowdControl: 90, scaling: 88, lateGame: 92, teamFight: 88 },
+  Vi: { dive: 93, pickoff: 90, engage: 86, junglePressure: 82, earlyGame: 75, mobility: 78 },
+  Lulu: { protectCarry: 98, peel: 96, shielding: 92, utility: 94, scaling: 82, disengage: 88 },
+  Renekton: { earlyGame: 94, laneBully: 92, dive: 88, snowball: 90, duelist: 86, scaling: 35 },
+  Pantheon: { earlyGame: 95, snowball: 92, dive: 90, roaming: 91, pickoff: 86, scaling: 32 },
+  Draven: { earlyGame: 95, laneBully: 96, snowball: 98, dps: 88, highRisk: 86, scaling: 48 },
+  Nautilus: { engage: 96, crowdControl: 96, pickoff: 90, frontline: 84, dive: 82, earlyGame: 80 },
+  TwistedFate: { globalPressure: 98, roaming: 94, pickoff: 88, waveClear: 82, utility: 80 },
+  Ezreal: { poke: 88, mobility: 92, longRange: 84, siege: 76, waveClear: 72 },
+  Jayce: { poke: 96, siege: 92, laneBully: 90, longRange: 88, earlyGame: 88, waveClear: 82 },
+  Xerath: { poke: 98, siege: 94, longRange: 98, waveClear: 90, zoneControl: 84 },
+  Caitlyn: { siege: 96, longRange: 94, laneBully: 90, poke: 88, objectiveControl: 76 },
+  Karma: { poke: 84, siege: 78, shielding: 90, protectCarry: 84, utility: 92, earlyGame: 82 },
+  JarvanIV: { engage: 94, dive: 92, junglePressure: 88, earlyGame: 84, teamFight: 86, crowdControl: 82 },
+  MissFortune: { teamFight: 94, zoneControl: 88, burst: 86, earlyGame: 78, longRange: 76 },
+  Leona: { engage: 98, crowdControl: 97, dive: 91, frontline: 88, earlyGame: 88 },
+  Ivern: { protectCarry: 94, shielding: 96, utility: 95, junglePressure: 74, peel: 90, disengage: 82 },
+  Janna: { disengage: 99, peel: 98, protectCarry: 96, shielding: 94, utility: 96, scaling: 80 },
 };
 
-export function buildChampionAttributes(input: {
+export type ChampionIdentityData = {
+  tags: ChampionAttributeKey[];
+  weights: ChampionAttribute[];
+};
+
+export function buildChampionIdentity(input: {
   id: string;
   roles: Role[];
   classes: ChampionClass[];
   stats: StrategicStats;
-}): ChampionAttribute[] {
+}): ChampionIdentityData {
   const values: Partial<Record<ChampionAttributeKey, number>> = {};
   addStatAttributes(values, input.stats);
 
   input.classes.forEach((championClass, index) => {
     const key = classAttributes[championClass];
-    if (key) add(values, key, index === 0 ? 92 : 78);
+    if (key) add(values, key, index === 0 ? 76 : 64);
   });
-  if (input.roles[0] === "Support") add(values, "support", 88);
+  if (input.roles[0] === "Support") add(values, "support", 76);
   if (input.roles.includes("Jungle")) add(values, "junglePressure", input.stats.earlyPressure * 0.55 + input.stats.objectiveControl * 0.45);
 
   Object.entries(traitGroups).forEach(([rawKey, ids]) => {
@@ -187,7 +214,7 @@ export function buildChampionAttributes(input: {
     add(values, rawKey as ChampionAttributeKey, value ?? 0);
   });
 
-  return Object.entries(values)
+  const weights = Object.entries(values)
     .map(([key, value]) => ({
       key: key as ChampionAttributeKey,
       label: championAttributeLabels[key as ChampionAttributeKey],
@@ -195,6 +222,27 @@ export function buildChampionAttributes(input: {
     }))
     .filter((attribute) => attribute.value >= 45)
     .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label));
+
+  return {
+    tags: [
+      ...new Set([
+        ...weights
+          .filter((attribute) => attribute.value >= 58)
+          .map((attribute) => attribute.key),
+        ...weights.slice(0, 5).map((attribute) => attribute.key),
+      ]),
+    ],
+    weights,
+  };
+}
+
+export function buildChampionAttributes(input: {
+  id: string;
+  roles: Role[];
+  classes: ChampionClass[];
+  stats: StrategicStats;
+}): ChampionAttribute[] {
+  return buildChampionIdentity(input).weights;
 }
 
 export function getChampionAttributeValue(
@@ -212,13 +260,27 @@ export function getTopChampionAttributes(
 }
 
 export function validateChampionAttributes(
-  champions: Pick<ChampionProfile, "id" | "attributes">[],
+  champions: Pick<ChampionProfile, "id" | "attributeTags" | "attributes">[],
 ): string[] {
   const errors: string[] = [];
   champions.forEach((champion) => {
     if (champion.attributes.length < 5) {
       errors.push(`${champion.id}: menos de 5 atributos`);
     }
+    if (champion.attributeTags.length < 5) {
+      errors.push(`${champion.id}: menos de 5 tags qualitativas`);
+    }
+    if (new Set(champion.attributeTags).size !== champion.attributeTags.length) {
+      errors.push(`${champion.id}: tag qualitativa duplicada`);
+    }
+    champion.attributeTags.forEach((key) => {
+      if (!validAttributeKeys.has(key)) {
+        errors.push(`${champion.id}: tag qualitativa invalida ${key}`);
+      }
+      if (!champion.attributes.some((attribute) => attribute.key === key)) {
+        errors.push(`${champion.id}: tag qualitativa sem peso ${key}`);
+      }
+    });
     const seen = new Set<ChampionAttributeKey>();
     champion.attributes.forEach((attribute) => {
       if (!validAttributeKeys.has(attribute.key)) {
