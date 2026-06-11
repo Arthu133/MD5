@@ -1,156 +1,185 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { generateShareText } from "../engine/diagnosisEngine";
+import { calculateFinalRunScore } from "../scoring/finalScore";
+import {
+  loadLocalRecords,
+  mostUsedEntry,
+  recordLocalRun,
+} from "../storage/localRecords";
 import type { CampaignResult, DraftTeam, TournamentStage } from "../types/game";
-import { ActiveRogueCardsPanel } from "./ActiveRogueCardsPanel";
-import { BuildSummary } from "./BuildSummary";
 import { MatchHistory } from "./MatchHistory";
-import { TeamAnalysis } from "./TeamAnalysis";
+import { RunProgress } from "./RunProgress";
 
 type ResultScreenProps = {
   result: CampaignResult;
   team: DraftTeam;
   onRestart: () => void;
+  onHome: () => void;
+  onHardRematch: () => void;
 };
 
-const stageLabels: Record<TournamentStage, string> = {
-  Groups: "Grupos",
-  Quarterfinals: "Quartas",
-  Semifinals: "Semifinal",
-  Final: "Final",
+const eliminatedTitles: Record<TournamentStage, string> = {
+  Groups: "Run encerrada na fase de grupos",
+  Quarterfinals: "Run encerrada nas quartas de final",
+  Semifinals: "Run encerrada na semifinal",
+  Final: "Run encerrada na final MD5",
 };
 
-const consistencyLabel = (value: number) =>
-  value >= 75 ? "Alta" : value >= 58 ? "Média" : "Baixa";
+const breakdownLabels = {
+  campaign: "Campanha",
+  matches: "Partidas",
+  draft: "Draft",
+  cards: "Cartas",
+  difficulty: "Dificuldade",
+  bonus: "Bônus",
+} as const;
 
-const hookForResult = (result: CampaignResult) => {
-  if (result.champion) return "Campeão do MD5. O título foi merecido.";
-  if (result.eliminatedAt === "Final") return "Vice-campeão. A final cobrou cada detalhe.";
-  if (result.eliminatedAt === "Semifinals") return "A semifinal expôs o limite do seu plano.";
-  if (result.eliminatedAt === "Quarterfinals") return "O mata-mata puniu as brechas do draft.";
-  return "A fase de grupos não perdoou a inconsistência.";
-};
+const formatPoints = (value: number) =>
+  new Intl.NumberFormat("pt-BR").format(value);
 
 export function ResultScreen({
   result,
   team,
   onRestart,
+  onHome,
+  onHardRematch,
 }: ResultScreenProps) {
   const [copied, setCopied] = useState(false);
+  const score = useMemo(() => calculateFinalRunScore(result), [result]);
+  const [records, setRecords] = useState(loadLocalRecords);
+
+  useEffect(() => {
+    setRecords(recordLocalRun(result, team, score));
+  }, [result, score, team]);
 
   const copyResult = async () => {
-    await navigator.clipboard.writeText(generateShareText(result, team));
+    await navigator.clipboard.writeText(
+      `${generateShareText(result, team)}\nScore MD5: ${formatPoints(
+        score.totalPoints,
+      )} pontos · ${score.rank.name}`,
+    );
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
   };
 
+  const resultTitle = result.champion
+    ? "Você conquistou a MD5"
+    : eliminatedTitles[result.eliminatedAt ?? "Groups"];
+
   return (
-    <main className="result-screen">
-      <section className={`result-hero ${result.champion ? "is-perfect" : ""}`}>
-        <div className="result-hero__glow" />
-        <div className="result-score">
-          <span>
-            MD5 · MODO {result.difficulty === "Hard" ? "DIFÍCIL" : "CLÁSSICO"}
-          </span>
-          <strong className="tournament-result">
-            {result.champion
-              ? "CAMPEÃO"
-              : stageLabels[result.eliminatedAt ?? "Groups"].toUpperCase()}
-          </strong>
-          <p>{hookForResult(result)}</p>
-        </div>
-        <div className="result-overview">
-          <div>
-            <span>Grupos</span>
-            <strong>{result.groupWins}<small>-</small>{result.groupLosses}</strong>
-          </div>
-          <div>
-            <span>Jogos totais</span>
-            <strong>{result.wins}<small>-</small>{result.losses}</strong>
-          </div>
-          <div>
-            <span>Nota</span>
-            <strong>{result.teamScore.total}<small>/100</small></strong>
-          </div>
-          <div>
-            <span>Consistência</span>
-            <strong>{consistencyLabel(result.teamScore.metrics.consistency)}</strong>
+    <main className="result-screen final-score-screen">
+      <RunProgress
+        phase="Result"
+        difficulty={result.difficulty}
+        activeCards={result.activeCards?.length ?? 0}
+      />
+
+      <section
+        className={`final-score-card rank-${score.rank.tier.toLowerCase()}`}
+      >
+        <div className="final-score-card__result">
+          <p className="eyebrow">RESULTADO DA RUN</p>
+          <h1>{resultTitle}</h1>
+          <p>{score.rank.message}</p>
+          <div className="final-run-record">
+            <span>Campanha</span>
+            <strong>
+              {result.wins}V <small>·</small> {result.losses}D
+            </strong>
           </div>
         </div>
-        <div className="result-actions">
+
+        <div className="rank-emblem" aria-label={`Rank ${score.rank.name}`}>
+          <span>{score.title}</span>
+          <strong>{score.rank.name}</strong>
+          <b>{formatPoints(score.totalPoints)} Pontos MD5</b>
+          <div className="rank-progress">
+            <i style={{ width: `${score.progressPercent}%` }} />
+          </div>
+          <small>
+            {score.pointsToNextRank !== null && score.nextRankName
+              ? `${formatPoints(score.pointsToNextRank)} pontos para ${
+                  score.nextRankName
+                }`
+              : "Você alcançou o topo da classificação"}
+          </small>
+        </div>
+
+        <div className="final-score-card__actions">
           <button className="primary-button" type="button" onClick={onRestart}>
-            Jogar outro torneio
+            Jogar novamente
           </button>
-          <button className="secondary-button" type="button" onClick={copyResult}>
-            {copied ? "Campanha copiada" : "Copiar campanha"}
+          {result.difficulty === "Classic" ? (
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={onHardRematch}
+            >
+              Revanche no modo difícil
+            </button>
+          ) : null}
+          <button className="ghost-button" type="button" onClick={onHome}>
+            Voltar ao início
           </button>
         </div>
       </section>
 
-      <section className="result-builds">
-        {team.map((build) => (
-          <BuildSummary build={build} compact key={build.role} />
-        ))}
-      </section>
+      <section className="final-score-grid">
+        <article className="score-breakdown panel">
+          <div className="score-panel-heading">
+            <div>
+              <p className="eyebrow">SEUS PONTOS</p>
+              <h2>De onde vieram</h2>
+            </div>
+            <button className="ghost-button" type="button" onClick={copyResult}>
+              {copied ? "Resultado copiado" : "Compartilhar"}
+            </button>
+          </div>
+          <div className="score-breakdown__list">
+            {Object.entries(score.breakdown).map(([key, value]) => (
+              <span key={key}>
+                {breakdownLabels[key as keyof typeof breakdownLabels]}
+                <strong>+{formatPoints(value)}</strong>
+              </span>
+            ))}
+          </div>
+        </article>
 
-      <ActiveRogueCardsPanel activeCards={result.activeCards ?? []} />
-      <TeamAnalysis score={result.teamScore} />
-      <MatchHistory series={result.series} />
-
-      <section className="diagnosis-grid">
-        {result.teamScore.warnings.length ? (
-          <article className="panel">
-            <p className="eyebrow">LIMITES ESTRUTURAIS DA NOTA</p>
-            <ul className="insight-list insight-list--warning">
-              {result.teamScore.warnings.map((warning) => (
-                <li key={warning}>{warning}</li>
-              ))}
-            </ul>
-          </article>
-        ) : null}
-        <article className="panel">
-          <p className="eyebrow">PONTOS FORTES</p>
-          <ul className="insight-list insight-list--positive">
-            {result.teamScore.strengths.map((strength) => (
-              <li key={strength}>{strength}</li>
-            ))}
-          </ul>
-        </article>
-        <article className="panel">
-          <p className="eyebrow">PONTOS FRACOS</p>
-          <ul className="insight-list insight-list--negative">
-            {(result.teamScore.weaknesses.length
-              ? result.teamScore.weaknesses
-              : ["Nenhuma fraqueza estrutural grave foi detectada."]
-            ).map((weakness) => (
-              <li key={weakness}>{weakness}</li>
-            ))}
-          </ul>
-        </article>
-        <article className="panel">
-          <p className="eyebrow">ADAPTAÇÃO ÀS REGRAS</p>
-          <ul className="insight-list insight-list--positive">
-            <li>Sinergia acumulada: {result.teamScore.cardSynergy}/100.</li>
-            <li>Adaptação da composição: {result.teamScore.rulesAdaptation}/100.</li>
-            <li>{result.activeCards?.length ?? 0} cartas permaneceram ativas no diagnóstico final.</li>
-          </ul>
-        </article>
-        <article className="panel">
-          <p className="eyebrow">ENCAIXE NAS POSIÇÕES</p>
-          <ul className="insight-list insight-list--warning">
-            {(result.teamScore.roleWarnings.length
-              ? result.teamScore.roleWarnings
-              : ["Todos os campeões cumpriram funções naturais ou flexíveis."]
-            ).map((warning) => (
-              <li key={warning}>{warning}</li>
-            ))}
-          </ul>
+        <article className="local-records panel">
+          <p className="eyebrow">SEUS RECORDES</p>
+          <h2>Melhor marca: {formatPoints(records.bestScore)}</h2>
+          <div>
+            <span>
+              Melhor rank <strong>{records.bestRank}</strong>
+            </span>
+            <span>
+              Melhor campanha <strong>{records.bestCampaignWins} vitórias</strong>
+            </span>
+            <span>
+              Vitórias no difícil <strong>{records.hardModeWins}</strong>
+            </span>
+            <span>
+              Campeão mais escolhido
+              <strong>
+                {mostUsedEntry(records.championPicks) ?? "Sem histórico"}
+              </strong>
+            </span>
+          </div>
         </article>
       </section>
 
-      <section className="final-diagnosis panel">
-        <p className="eyebrow">DIAGNÓSTICO FINAL</p>
-        <blockquote>{result.finalDiagnosis}</blockquote>
-      </section>
+      <details className="result-details panel">
+        <summary>
+          <span>
+            <strong>Rever campanha</strong>
+            <small>Partidas e diagnóstico final</small>
+          </span>
+        </summary>
+        <div className="result-details__content">
+          <p>{result.finalDiagnosis}</p>
+          <MatchHistory series={result.series} />
+        </div>
+      </details>
     </main>
   );
 }

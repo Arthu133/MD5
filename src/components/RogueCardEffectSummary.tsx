@@ -41,9 +41,15 @@ const labels: Record<string, string> = {
   objectiveStealChance: "Roubos",
   earlyObjectiveOffset: "Objetivos antecipados",
   varianceMultiplier: "Variância",
+  comebackMultiplier: "Comeback multiplier",
+  snowballMultiplier: "Snowball multiplier",
+  teamScoreWeight: "Peso da nota do time",
   enemyDraftQuality: "Draft adversário",
   offMetaModifier: "Off-meta",
   roleFitModifier: "Encaixe de rota",
+  scoreCapModifier: "Limite de pontuação",
+  mentalReset: "Mental reset",
+  momentum: "Momentum",
 };
 
 const valueLabel = (operation: string, value: number) => {

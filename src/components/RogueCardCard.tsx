@@ -8,6 +8,39 @@ type RogueCardCardProps = {
   onSelect: () => void;
 };
 
+const impactLabel = (card: RogueCard) => {
+  const maxEffect = Math.max(
+    ...card.effects.map((effect) =>
+      effect.operation === "multiply"
+        ? Math.abs((effect.value - 1) * 100)
+        : Math.abs(effect.value),
+    ),
+    0,
+  );
+  return maxEffect >= 25 ? "Alto" : maxEffect >= 12 ? "Médio" : "Baixo";
+};
+
+const styleLabel = (card: RogueCard) => {
+  const tag = card.tags.find((entry) =>
+    ["engage", "scaling", "poke", "objective", "snowball", "teamfight"].includes(
+      entry.toLowerCase(),
+    ),
+  );
+  return tag ?? card.tags[0] ?? "Adaptação";
+};
+
+const riskLabel = (card: RogueCard) => {
+  const affectsBothTeams = card.target.includes("BothTeams");
+  const hasTradeoff =
+    card.target.includes("UserTeam") &&
+    card.effects.some(
+    (effect) =>
+      (effect.operation === "multiply" ? effect.value < 1 : effect.value < 0),
+    );
+
+  return affectsBothTeams ? "Alto" : hasTradeoff ? "Médio" : "Baixo";
+};
+
 export function RogueCardCard({
   card,
   selected,
@@ -29,12 +62,13 @@ export function RogueCardCard({
       <h3>{card.name}</h3>
       <p>{card.description}</p>
       {difficulty === "Classic" ? (
-        <RogueCardEffectSummary card={card} />
-      ) : (
-        <div className="rogue-card__hidden-effect">
-          Efeito detalhado oculto no modo Difícil
+        <div className="rogue-card__decision-tags">
+          <span>Impacto {impactLabel(card)}</span>
+          <span>Risco {riskLabel(card)}</span>
+          <span>{styleLabel(card)}</span>
         </div>
-      )}
+      ) : null}
+      <RogueCardEffectSummary card={card} />
     </button>
   );
 }

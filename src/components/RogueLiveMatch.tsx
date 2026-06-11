@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { calculateMatchTickMs, eventIsVisibleAtSpeed } from "../engine/liveMatchEngine";
 import type {
+  GameDifficulty,
   MatchResult,
   SimulationMode,
   SimulationSpeed,
@@ -13,10 +14,12 @@ import { LiveObjectivePanel } from "./LiveObjectivePanel";
 import { LiveScoreboard } from "./LiveScoreboard";
 import { LiveTimelineControls } from "./LiveTimelineControls";
 import { MatchSummaryCard } from "./MatchSummaryCard";
+import { RunProgress } from "./RunProgress";
 import { SeriesScoreboard } from "./SeriesScoreboard";
 
 type RogueLiveMatchProps = {
   match: MatchResult;
+  difficulty: GameDifficulty;
   mode: SimulationMode;
   speed: SimulationSpeed;
   onModeChange: (mode: SimulationMode) => void;
@@ -29,6 +32,7 @@ type RogueLiveMatchProps = {
 
 export function RogueLiveMatch({
   match,
+  difficulty,
   mode,
   speed,
   onModeChange,
@@ -94,9 +98,28 @@ export function RogueLiveMatch({
   const finalEnemyWins = seriesEnemyWins + (match.win ? 0 : 1);
   const seriesFinished =
     match.stage === "Groups" || finalUserWins >= 3 || finalEnemyWins >= 3;
+  const nextLabel =
+    match.stage === "Groups"
+      ? match.matchNumber >= 3
+        ? "Ver resultado dos grupos"
+        : "Escolher próxima regra"
+      : seriesFinished
+        ? match.stage === "Final" || finalEnemyWins >= 3
+          ? "Ver score final"
+          : "Escolher regra da próxima fase"
+        : `Iniciar Jogo ${match.gameNumber + 1}`;
 
   return (
     <main className="live-match-screen">
+      <RunProgress
+        phase="Match"
+        difficulty={difficulty}
+        stage={match.stage}
+        matchNumber={match.gameNumber}
+        seriesUserWins={seriesUserWins}
+        seriesEnemyWins={seriesEnemyWins}
+        activeCards={match.activeCards?.length ?? 0}
+      />
       <div className="rogue-live-heading panel">
         <div>
           <p className="eyebrow">TORNEIO EM ANDAMENTO</p>
@@ -122,11 +145,7 @@ export function RogueLiveMatch({
               winner={simulation.finalWinner}
               seriesUserWins={finalUserWins}
               seriesEnemyWins={finalEnemyWins}
-              nextLabel={
-                seriesFinished
-                  ? "Ir para próxima escolha"
-                  : "Continuar série MD5"
-              }
+              nextLabel={nextLabel}
               onNext={onContinue}
               compact
             />

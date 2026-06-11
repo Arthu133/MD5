@@ -4,7 +4,7 @@ import { ChampionCard } from "./components/ChampionCard";
 import { DraftBoard } from "./components/DraftBoard";
 import { ResultScreen } from "./components/ResultScreen";
 import { RogueTournamentScreen } from "./components/RogueTournamentScreen";
-import { TeamAnalysis } from "./components/TeamAnalysis";
+import { RunProgress } from "./components/RunProgress";
 import { DATA_DRAGON_VERSION } from "./data/champions/generatedChampions";
 import {
   CHAMPION_OPTION_COUNT,
@@ -28,13 +28,17 @@ import { ROLES } from "./types/game";
 
 type Stage = "intro" | "draft" | "review" | "live" | "result";
 
+const qualityLabel = (value: number) =>
+  value >= 75 ? "Alta" : value >= 55 ? "Média" : "Baixa";
+
 function App() {
   const [stage, setStage] = useState<Stage>("intro");
   const [roleIndex, setRoleIndex] = useState(0);
   const [team, setTeam] = useState<DraftTeam>([]);
   const [championOptions, setChampionOptions] = useState<ChampionProfile[]>([]);
   const [result, setResult] = useState<CampaignResult | null>(null);
-  const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
+  const [difficulty, setDifficulty] = useState<GameDifficulty>("Classic");
+  const [showGuide, setShowGuide] = useState(false);
   const [refreshesRemaining, setRefreshesRemaining] = useState(0);
   const [simulationMode, setSimulationMode] =
     useState<SimulationMode>("Automatic");
@@ -49,23 +53,25 @@ function App() {
     [difficulty, team],
   );
 
-  const startDraft = () => {
-    if (!difficulty) return;
+  const startDraftFor = (nextDifficulty: GameDifficulty) => {
+    setDifficulty(nextDifficulty);
     setTeam([]);
     setRoleIndex(0);
     setResult(null);
-    setRefreshesRemaining(refreshByDifficulty[difficulty]);
+    setRefreshesRemaining(refreshByDifficulty[nextDifficulty]);
     setChampionOptions(
       getRandomChampionsForRole(
         ROLES[0],
         [],
         CHAMPION_OPTION_COUNT,
-        difficulty,
+        nextDifficulty,
       ),
     );
     setStage("draft");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const startDraft = () => startDraftFor(difficulty);
 
   const chooseChampion = (champion: ChampionProfile) => {
     const nextTeam: DraftTeam = [
@@ -120,7 +126,7 @@ function App() {
   };
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell app-shell--${stage}`}>
       <header className="site-header">
         <button className="brand" type="button" onClick={() => setStage("intro")}>
           <span className="brand__mark">M</span>
@@ -147,8 +153,7 @@ function App() {
               </h1>
               <h2>Monte seu draft. Acumule regras. Sobreviva ao mata-mata.</h2>
               <p>
-                Escolha campeões reais e transforme cada partida com cartas
-                roguelike que permanecem ativas durante todo o torneio.
+                Escolha campeões, combine regras caóticas e conquiste a MD5.
               </p>
               <div
                 className="difficulty-selector"
@@ -174,7 +179,7 @@ function App() {
                 >
                   <span>Difícil</span>
                   <small>
-                    1 Refresh global e números internos ocultos. Decida pela
+                    1 Refresh global e análises estratégicas ocultas. Decida pela
                     leitura, conhecimento e intuição.
                   </small>
                 </button>
@@ -184,18 +189,13 @@ function App() {
                   className="primary-button primary-button--large"
                   type="button"
                   onClick={startDraft}
-                  disabled={!difficulty}
                 >
-                  Começar Draft
+                  Jogar agora
                 </button>
                 <button
                   className="secondary-button primary-button--large"
                   type="button"
-                  onClick={() =>
-                    document
-                      .getElementById("como-funciona")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
+                  onClick={() => setShowGuide(true)}
                 >
                   Como funciona
                 </button>
@@ -216,28 +216,12 @@ function App() {
               <div className="orbit orbit--two" />
             </div>
           </section>
-          <section className="intro-features md5-features" id="como-funciona">
-            <article>
-              <strong>01</strong>
-              <span>Draft competitivo</span>
-              <p>Escolha um campeão entre 10 opções para cada posição.</p>
-            </article>
-            <article>
-              <strong>02</strong>
-              <span>Cartas acumulativas</span>
-              <p>Antes de cada jogo, escolha uma entre três regras permanentes.</p>
-            </article>
-            <article>
-              <strong>03</strong>
-              <span>Partidas transformadas</span>
-              <p>Objetivos, mapa, duração, drafts e resultados obedecem às cartas.</p>
-            </article>
-            <article>
-              <strong>04</strong>
-              <span>Séries MD5</span>
-              <p>Passe dos grupos e vença quartas, semifinal e final.</p>
-            </article>
-          </section>
+          <div className="intro-loop" aria-label="Fluxo do jogo">
+            <span>Monte o draft</span>
+            <span>Escolha a regra</span>
+            <span>Vença a série</span>
+            <span>Suba de rank</span>
+          </div>
         </main>
       ) : null}
 
@@ -245,6 +229,7 @@ function App() {
         <main className="game-layout">
           <DraftBoard team={team} currentRole={currentRole} />
           <div className="game-content">
+            <RunProgress phase="Draft" difficulty={difficulty} />
             <div className="progress-header">
               <div>
                 <p className="step-kicker">
@@ -290,6 +275,7 @@ function App() {
 
       {stage === "review" && teamScore ? (
         <main className="review-screen">
+          <RunProgress phase="Review" difficulty={difficulty} />
           <div className="review-heading">
             <div>
               <p className="step-kicker">DRAFT COMPLETO</p>
@@ -373,7 +359,7 @@ function App() {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                 >
-                  Escolher primeira carta
+                  Escolher regra do Jogo 1
                 </button>
               </div>
             </aside>
@@ -384,18 +370,40 @@ function App() {
                     build={build}
                     key={build.role}
                     hiddenInsights={difficulty === "Hard"}
+                    compact
                   />
                 ))}
               </section>
               {difficulty === "Classic" ? (
-                <TeamAnalysis score={teamScore} />
+                <section className="review-quick-read panel">
+                  <div>
+                    <p className="eyebrow">LEITURA RÁPIDA</p>
+                    <h2>{teamScore.archetype}</h2>
+                    <p>{teamScore.winCondition}</p>
+                  </div>
+                  <span>
+                    Consistência
+                    <strong>{qualityLabel(teamScore.metrics.consistency)}</strong>
+                  </span>
+                  <span>
+                    Objetivos
+                    <strong>
+                      {qualityLabel(teamScore.metrics.objectiveControl)}
+                    </strong>
+                  </span>
+                  <span>
+                    Encaixe
+                    <strong>{qualityLabel(teamScore.metrics.roleFit)}</strong>
+                  </span>
+                </section>
               ) : (
                 <section className="blind-review panel">
                   <p className="eyebrow">MODO DIFÍCIL</p>
-                  <h2>Os riscos estratégicos permanecem ocultos por enquanto.</h2>
+                  <h2>A leitura estratégica depende de você.</h2>
                   <p>
-                    Encaixe nas posições, condição de vitória e números das cartas
-                    serão revelados somente depois da campanha.
+                    Recomendações, comparação de arquétipos e sugestões
+                    permanecem ocultas. As cartas mostram somente seus
+                    modificadores brutos.
                   </p>
                 </section>
               )}
@@ -424,16 +432,55 @@ function App() {
       ) : null}
 
       {stage === "result" && result ? (
-        <ResultScreen result={result} team={team} onRestart={startDraft} />
+        <ResultScreen
+          result={result}
+          team={team}
+          onRestart={startDraft}
+          onHardRematch={() => startDraftFor("Hard")}
+          onHome={() => {
+            setResult(null);
+            setTeam([]);
+            setStage("intro");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
       ) : null}
 
-      <footer className="site-footer">
-        <p>
-          MD5 é um fan project independente e não é endossado pela Riot Games.
-          League of Legends e propriedades associadas pertencem à Riot Games,
-          Inc.
-        </p>
-      </footer>
+      {stage === "intro" ? (
+        <footer className="site-footer">
+          <p>
+            MD5 é um fan project independente e não é endossado pela Riot Games.
+          </p>
+        </footer>
+      ) : null}
+
+      {showGuide ? (
+        <div className="game-guide" role="dialog" aria-modal="true">
+          <button
+            className="game-guide__backdrop"
+            type="button"
+            aria-label="Fechar"
+            onClick={() => setShowGuide(false)}
+          />
+          <section className="game-guide__panel panel">
+            <p className="eyebrow">COMO FUNCIONA</p>
+            <h2>Uma run rápida em quatro decisões</h2>
+            <ol>
+              <li>Monte um time com cinco campeões.</li>
+              <li>Escolha regras que alteram o ritmo das partidas.</li>
+              <li>Vença os grupos e as séries melhor de cinco.</li>
+              <li>Receba Pontos MD5 e tente alcançar Desafiante.</li>
+            </ol>
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => setShowGuide(false)}
+            >
+              Entendi
+            </button>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

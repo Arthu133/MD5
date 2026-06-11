@@ -22,7 +22,11 @@ export function DraftComparisonPanel({
     <section className="draft-comparison">
       <div className="draft-comparison__heading">
         <div>
-          <p className="eyebrow">LEITURA ESTRATÉGICA</p>
+          <p className="eyebrow">
+            {difficulty === "Classic"
+              ? "LEITURA ESTRATÉGICA"
+              : "DRAFTS DA PARTIDA"}
+          </p>
           <h2>Comparação dos drafts</h2>
         </div>
         {difficulty === "Classic" ? (

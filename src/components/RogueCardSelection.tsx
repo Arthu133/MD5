@@ -9,9 +9,9 @@ import type {
   TeamArchetype,
   TournamentStage,
 } from "../types/game";
-import { ActiveRogueCardsPanel } from "./ActiveRogueCardsPanel";
 import { DraftComparisonPanel } from "./DraftComparisonPanel";
 import { RogueCardCard } from "./RogueCardCard";
+import { RunProgress } from "./RunProgress";
 
 type RogueCardSelectionProps = {
   options: RogueCard[];
@@ -53,6 +53,9 @@ export function RogueCardSelection({
 }: RogueCardSelectionProps) {
   const [selected, setSelected] = useState<RogueCard | null>(null);
   const isGroupStage = stage === "Groups";
+  const gameNumber = isGroupStage
+    ? matchNumber
+    : seriesUserWins + seriesEnemyWins + 1;
   const matchupInsight = selected
     ? getRogueCardMatchupInsight(
         selected,
@@ -64,18 +67,34 @@ export function RogueCardSelection({
 
   return (
     <main className="rogue-selection-screen">
+      <RunProgress
+        phase="Card"
+        difficulty={difficulty}
+        stage={stage}
+        matchNumber={gameNumber}
+        seriesUserWins={seriesUserWins}
+        seriesEnemyWins={seriesEnemyWins}
+        activeCards={activeCards.length}
+      />
       <section className="rogue-selection-heading">
         <div>
           <p className="step-kicker">
             PRÓXIMA PARTIDA · {stageLabels[stage]}
           </p>
-          <h1>Escolha a próxima regra.</h1>
+          <h1>Escolha a regra que pode decidir o jogo.</h1>
           <p>
-            O adversário já está definido. Analise o draft de{" "}
-            <strong>{enemy.name}</strong> antes de aplicar uma regra{" "}
-            {isGroupStage
-              ? "para esta partida."
-              : "que permanecerá por toda esta série MD5."}
+            {difficulty === "Classic" ? (
+              <>
+                Compare seu draft com <strong>{enemy.name}</strong> antes de
+                decidir.
+              </>
+            ) : (
+              <>
+                <strong>{enemy.name}</strong> está definido. Decida pelos
+                modificadores brutos da regra.
+              </>
+            )}{" "}
+            {!isGroupStage ? "A escolha vale por toda esta série MD5." : null}
           </p>
         </div>
       </section>
@@ -106,7 +125,7 @@ export function RogueCardSelection({
                   onRefresh();
                 }}
               >
-                Atualizar cartas ({refreshesRemaining})
+                Rerrolar regras ({refreshesRemaining})
               </button>
               <button
                 className="primary-button primary-button--large"
@@ -114,9 +133,7 @@ export function RogueCardSelection({
                 disabled={!selected}
                 onClick={() => selected && onConfirm(selected)}
               >
-                {isGroupStage
-                  ? "Aplicar e iniciar partida"
-                  : "Aplicar e iniciar série MD5"}
+                Iniciar Jogo {gameNumber}
               </button>
             </div>
           </div>
@@ -146,9 +163,6 @@ export function RogueCardSelection({
         />
       </div>
 
-      {activeCards.length ? (
-        <ActiveRogueCardsPanel activeCards={activeCards} />
-      ) : null}
     </main>
   );
 }

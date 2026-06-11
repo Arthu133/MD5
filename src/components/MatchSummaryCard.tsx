@@ -27,6 +27,19 @@ const decisivePriority: Partial<
   DragonTaken: 5,
 };
 
+const decisiveRole = (
+  zone: LiveMatchSimulation["events"][number]["mapZone"] | undefined,
+) => {
+  if (!zone) return "Equipe";
+  if (zone === "TopLane") return "Top";
+  if (zone === "MidLane") return "Mid";
+  if (zone === "BotLane") return "Carry";
+  if (["TopJungle", "BotJungle", "DragonPit", "BaronPit", "River"].includes(zone)) {
+    return "Jungle";
+  }
+  return "Support";
+};
+
 export function MatchSummaryCard({
   simulation,
   stats,
@@ -50,17 +63,18 @@ export function MatchSummaryCard({
           (decisivePriority[left.type] ?? 0) ||
         right.minute - left.minute,
     )[0];
+  const decisiveCard = simulation.activeCards?.at(-1)?.card.name;
 
   return (
     <section
       className={`match-summary panel ${winner === "User" ? "is-win" : "is-loss"} ${compact ? "match-summary--compact" : ""}`}
     >
       <div className="match-summary__result">
-        <p className="eyebrow">FIM DE JOGO</p>
+        <p className="eyebrow">FIM DO JOGO {simulation.gameNumber}</p>
         <h2>
           {winner === "User"
-            ? "Vitória do MD5"
-            : `Vitória de ${simulation.enemyName}`}
+            ? `Você venceu o Jogo ${simulation.gameNumber}`
+            : `Você perdeu o Jogo ${simulation.gameNumber}`}
         </h2>
         <p>{simulation.finalReason}</p>
         {decisiveEvent ? (
@@ -69,6 +83,21 @@ export function MatchSummaryCard({
             <strong>{decisiveEvent.description}</strong>
           </div>
         ) : null}
+        <div className="match-summary__highlights">
+          <span>
+            Fator decisivo
+            <strong>{decisiveEvent?.title ?? simulation.finalReason}</strong>
+          </span>
+          <span>
+            Posição decisiva
+            <strong>{decisiveRole(decisiveEvent?.mapZone)}</strong>
+          </span>
+          {decisiveCard ? (
+            <span>
+              Regra ativa <strong>{decisiveCard}</strong>
+            </span>
+          ) : null}
+        </div>
       </div>
       <div className="match-summary__stats">
         <span>

@@ -106,6 +106,7 @@ export function RogueTournamentScreen({
       <RogueLiveMatch
         key={prepared.match.matchNumber}
         match={prepared.match}
+        difficulty={difficulty}
         mode={simulationMode}
         speed={simulationSpeed}
         onModeChange={onModeChange}
