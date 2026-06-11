@@ -5872,6 +5872,23 @@ strong {
   line-height: 1.35;
 }
 
+.rogue-effect-summary > span {
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.rogue-effect-summary .rogue-effect-summary__label {
+  display: block;
+  min-width: 0;
+  overflow-wrap: normal;
+  white-space: normal;
+  word-break: normal;
+}
+
+.rogue-effect-summary > span > strong {
+  flex: none;
+}
+
 .rogue-card:hover {
   transform: translateY(-4px);
 }

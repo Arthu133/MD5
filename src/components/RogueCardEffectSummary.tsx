@@ -54,6 +54,12 @@ const valueLabel = (operation: string, value: number) => {
   return `${value >= 0 ? "+" : ""}${value}`;
 };
 
+const effectLabel = (key: string) =>
+  labels[key] ??
+  key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ");
+
 export function RogueCardEffectSummary({
   card,
 }: RogueCardEffectSummaryProps) {
@@ -63,7 +69,9 @@ export function RogueCardEffectSummary({
         const key = entry.metric ?? entry.stat ?? entry.rule ?? entry.type;
         return (
           <span key={`${card.id}-${key}-${index}`}>
-            {labels[key] ?? key}
+            <span className="rogue-effect-summary__label">
+              {effectLabel(key)}
+            </span>
             <strong>{valueLabel(entry.operation, entry.value)}</strong>
           </span>
         );
