@@ -10,6 +10,7 @@ import type {
   TeamIdentity,
   WinConditionKey,
 } from "../types/game";
+import { analyzeRegionalCombo } from "./regionalComboEngine";
 
 const clamp = (value: number) => Math.round(Math.max(0, Math.min(100, value)));
 const average = (values: number[]) =>
@@ -399,6 +400,7 @@ const applyStructuralRules = (
 
 export function analyzeTeamIdentity(team: DraftTeam): TeamIdentity {
   const attributeProfile = aggregateTeamAttributes(team);
+  const regionalCombo = analyzeRegionalCombo(team);
   const scores = Object.fromEntries(
     (Object.keys(winConditionWeights) as WinConditionKey[]).map((condition) => [
       condition,
@@ -450,6 +452,7 @@ export function analyzeTeamIdentity(team: DraftTeam): TeamIdentity {
   return {
     primaryWinCondition,
     displayName: getIdentityDisplayName(team, primaryWinCondition),
+    regionalCombo,
     secondaryWinConditions,
     strengths,
     weaknesses,

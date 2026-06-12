@@ -338,9 +338,32 @@ export type WinConditionKey =
   | "Anti-Tank"
   | "Map Pressure";
 
+export type RegionalComboStatus = "Thematic" | "Active" | "Complete";
+
+export type RegionalComboDefinition = {
+  id: string;
+  category: "regional";
+  region: string;
+  name: string;
+  champions: string[];
+  identityTags: string[];
+  compatibleCards: string[];
+  rewardProfile: string;
+  resultPhrase: string;
+};
+
+export type RegionalComboMatch = RegionalComboDefinition & {
+  matchedChampionIds: string[];
+  matchCount: number;
+  status: RegionalComboStatus;
+  scoreBonus: number;
+  cardSynergyBonus: number;
+};
+
 export type TeamIdentity = {
   primaryWinCondition: WinConditionKey;
   displayName: string;
+  regionalCombo?: RegionalComboMatch;
   secondaryWinConditions: WinConditionKey[];
   strengths: string[];
   weaknesses: string[];

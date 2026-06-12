@@ -80,6 +80,21 @@ export function DraftComparisonPanel({
             <div className="draft-comparison__plan">
               <span>Seu plano</span>
               <strong>{userIdentity.displayName}</strong>
+              {userIdentity.regionalCombo ? (
+                <div className="draft-comparison__regional">
+                  <span>
+                    {userIdentity.regionalCombo.status === "Thematic"
+                      ? "Tema regional"
+                      : "Região ativa"}
+                  </span>
+                  <strong>{userIdentity.regionalCombo.name}</strong>
+                  <small>
+                    {userIdentity.regionalCombo.identityTags
+                      .slice(0, 3)
+                      .join(" • ")}
+                  </small>
+                </div>
+              ) : null}
             </div>
             <div className="draft-comparison__plan">
               <span>Plano adversário</span>

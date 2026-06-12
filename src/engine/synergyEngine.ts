@@ -494,6 +494,11 @@ export function calculateTeamScore(
 ): TeamScore {
   const metrics = calculateMetrics(team, difficulty);
   const identity = analyzeTeamIdentity(team);
+  const regionalScoreBonus = identity.regionalCombo?.scoreBonus ?? 0;
+  metrics.cardSynergy = clamp(
+    metrics.cardSynergy +
+      (identity.regionalCombo?.cardSynergyBonus ?? 0),
+  );
   const archetype = detectTeamArchetype(team, difficulty);
   const synergyBonus = calculateSynergyBonus(team, difficulty);
   const damageBalance = clamp(
@@ -531,7 +536,8 @@ export function calculateTeamScore(
       metrics.waveClear * 0.05 +
       winConditionClarity * 0.1 +
       Math.max(-5, Math.min(4, synergyBonus * 0.45)) +
-      identityReward,
+      identityReward +
+      regionalScoreBonus,
   );
   const scoreCap = calculateDraftScoreCap(team, rawTotal, difficulty);
   const roleWarnings = team.flatMap((build) => {

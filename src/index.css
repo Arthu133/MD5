@@ -5352,6 +5352,24 @@ strong {
   line-height: 1.4;
 }
 
+.draft-comparison__regional {
+  display: grid;
+  gap: 2px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.draft-comparison__regional strong {
+  color: var(--gold-soft);
+}
+
+.draft-comparison__regional small {
+  color: var(--muted);
+  font-size: 6px;
+  line-height: 1.45;
+}
+
 @media (max-width: 1180px) {
   .rogue-selection-layout {
     grid-template-columns: 220px minmax(0, 1fr);
@@ -5550,6 +5568,15 @@ strong {
 .review-quick-read > div > p:last-child {
   color: var(--muted);
   font-size: 10px;
+}
+
+.review-quick-read .regional-combo-summary {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.review-quick-read .regional-combo-summary strong {
+  color: var(--gold-soft);
 }
 
 .review-quick-read > span {

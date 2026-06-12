@@ -9,6 +9,10 @@ import {
 } from "../data/champions/championAttributes";
 import { generatedChampions } from "../data/champions/generatedChampions";
 import {
+  regionalComboList,
+  regionalCombos,
+} from "../data/combos/regionalCombos";
+import {
   rogueCards,
   rogueCardValidationErrors,
 } from "../data/rogueCards";
@@ -41,6 +45,10 @@ import {
   refreshRogueCardOptions,
 } from "./rogueCardEngine";
 import { evaluateRogueCardContext } from "./rogueCardContextEngine";
+import {
+  analyzeRegionalCombo,
+  getRegionalCardBonus,
+} from "./regionalComboEngine";
 import { calculateRoleFit } from "./roleEngine";
 import {
   canUseRefresh,
@@ -606,6 +614,67 @@ describe("MD5 roguelike engine", () => {
       expect(card?.mechanic).toBe(mechanic);
       expect(card?.description.split(/\s+/).length).toBeLessThanOrEqual(12);
     });
+  });
+
+  it("mantem regionalCombos separados e com metadados completos", () => {
+    expect(regionalComboList).toHaveLength(15);
+    expect(Object.keys(regionalCombos)).toHaveLength(15);
+    const championIds = new Set(championProfiles.map((champion) => champion.id));
+    const cardNames = new Set(rogueCards.map((card) => card.name));
+
+    regionalComboList.forEach((combo) => {
+      expect(combo.category).toBe("regional");
+      expect(combo.champions).toHaveLength(5);
+      expect(combo.identityTags).toHaveLength(5);
+      expect(combo.compatibleCards).toHaveLength(5);
+      expect(combo.rewardProfile.length).toBeGreaterThan(5);
+      expect(combo.resultPhrase.length).toBeGreaterThan(15);
+      combo.champions.forEach((id) => expect(championIds.has(id)).toBe(true));
+      combo.compatibleCards.forEach((name) =>
+        expect(cardNames.has(name)).toBe(true),
+      );
+    });
+    expect(regionalCombos.zaunChemtech.champions).toContain("Renata");
+    expect(regionalCombos.zaunChemtech.champions).not.toContain("RenataGlasc");
+  });
+
+  it("reconhece tema regional com 3, ativa com 4 e completa com 5", () => {
+    const demaciaIds = regionalCombos.demaciaValor.champions;
+    const teamFor = (ids: string[]): DraftTeam =>
+      ids.map((id, index) => ({
+        role: ROLES[index],
+        champion: getChampion(id),
+        items: [],
+      }));
+    const thematic = analyzeRegionalCombo(teamFor(demaciaIds.slice(0, 3)));
+    const active = analyzeRegionalCombo(teamFor(demaciaIds.slice(0, 4)));
+    const complete = analyzeRegionalCombo(teamFor(demaciaIds));
+
+    expect(thematic?.status).toBe("Thematic");
+    expect(thematic?.scoreBonus).toBe(0);
+    expect(active?.status).toBe("Active");
+    expect(active?.scoreBonus).toBe(1);
+    expect(complete?.status).toBe("Complete");
+    expect(complete?.scoreBonus).toBe(2);
+    expect(complete?.name).toBe("Demacia Valor");
+  });
+
+  it("aplica sinergia regional apenas com combo ativo e carta compativel", () => {
+    const demacia = regionalCombos.demaciaValor;
+    const active = analyzeRegionalCombo(
+      createTeam(["Garen", "JarvanIV", "Lux", "Vayne", "Braum"]),
+    );
+    const complete = analyzeRegionalCombo(
+      createTeam(demacia.champions),
+    );
+    const thematic = analyzeRegionalCombo(
+      createTeam(["Garen", "JarvanIV", "Lux", "Ashe", "Braum"]),
+    );
+
+    expect(getRegionalCardBonus(thematic, ["Protect the Carry"])).toBe(0);
+    expect(getRegionalCardBonus(active, ["Protect the Carry"])).toBe(1);
+    expect(getRegionalCardBonus(complete, ["Protect the Carry"])).toBe(2);
+    expect(getRegionalCardBonus(complete, ["Poke Meta"])).toBe(0);
   });
 
   it("oferece Ultima Chance apenas fora dos grupos", () => {

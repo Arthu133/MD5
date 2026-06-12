@@ -358,6 +358,17 @@ function App() {
                     <p className="eyebrow">LEITURA RÁPIDA</p>
                     <h2>{teamScore.identity.displayName}</h2>
                     <p>{teamScore.winCondition}</p>
+                    {teamScore.identity.regionalCombo ? (
+                      <p className="regional-combo-summary">
+                        {teamScore.identity.regionalCombo.status === "Thematic"
+                          ? "Tema regional"
+                          : "Região ativa"}
+                        :{" "}
+                        <strong>
+                          {teamScore.identity.regionalCombo.name}
+                        </strong>
+                      </p>
+                    ) : null}
                   </div>
                   <span>
                     Consistência

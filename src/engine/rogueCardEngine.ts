@@ -19,6 +19,7 @@ import type {
 import { calculateRoleFit } from "./roleEngine";
 import { calculateTeamScore } from "./synergyEngine";
 import { applyChampionAttributeDelta } from "./championAttributeEngine";
+import { getRegionalCardBonus } from "./regionalComboEngine";
 
 const clamp = (value: number, min = 0, max = 100) =>
   Math.round(Math.max(min, Math.min(max, value)));
@@ -267,6 +268,10 @@ export function applyRogueCardsToTeamScore(
   const applicableCards = activeCards.filter(({ card }) =>
     cardAppliesTo(card, target),
   );
+  const regionalCardBonus = getRegionalCardBonus(
+    baseScore.identity.regionalCombo,
+    applicableCards.map(({ card }) => card.name),
+  );
   applicableCards.forEach(({ card }) => {
     card.effects.forEach((entry) => {
       if (
@@ -297,6 +302,7 @@ export function applyRogueCardsToTeamScore(
   metrics.cardSynergy = clamp(
     metrics.cardSynergy +
       applicableCards.length * 1.5 +
+      regionalCardBonus +
       Math.min(
         12,
         new Set(applicableCards.flatMap(({ card }) => card.tags)).size,

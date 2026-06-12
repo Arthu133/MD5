@@ -34,8 +34,13 @@ export function generateFinalDiagnosis(result: CampaignResult): string {
   const opponentNote = decisiveSeries
     ? ` ${decisiveSeries.enemy.name} venceu com ${decisiveSeries.enemy.mainThreat}, apoiado por um draft ${decisiveSeries.enemy.draftCoherence}/100.`
     : "";
+  const regionalNote =
+    result.difficulty === "Classic" &&
+    teamScore.identity.regionalCombo?.status === "Complete"
+      ? ` ${teamScore.identity.regionalCombo.resultPhrase}`
+      : "";
 
-  return `${opening}${strength}${weakness}${cardNote}${roleNote}${opponentNote}`;
+  return `${opening}${strength}${weakness}${cardNote}${roleNote}${regionalNote}${opponentNote}`;
 }
 
 export function generateShareText(

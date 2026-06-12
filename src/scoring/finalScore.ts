@@ -189,6 +189,12 @@ const bonusPoints = (result: CampaignResult) => {
         return userLosses > userWins;
       }),
   ).length;
+  const regionalBonus =
+    result.teamScore.identity.regionalCombo?.status === "Complete"
+      ? 100
+      : result.teamScore.identity.regionalCombo?.status === "Active"
+        ? 50
+        : 0;
 
   return clamp(
     Math.round(
@@ -196,7 +202,8 @@ const bonusPoints = (result: CampaignResult) => {
         result.groupWins * 60 +
         knockoutWins * 120 +
         comebackSeries * 100 +
-        result.teamScore.rulesAdaptation * 2,
+        result.teamScore.rulesAdaptation * 2 +
+        regionalBonus,
     ),
     0,
     1000,
