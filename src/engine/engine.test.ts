@@ -137,9 +137,15 @@ describe("MD5 roguelike engine", () => {
       createTeam(["Malphite", "JarvanIV", "Orianna", "Twitch", "Leona"]),
     );
     expect(womboCombo.primaryWinCondition).toBe("Wombo Combo");
+    expect(womboCombo.displayName).toBe("Comp do Montanha");
     expect(womboCombo.secondaryWinConditions).toEqual(
       expect.arrayContaining(["Team Fight 5v5", "Hard Engage"]),
     );
+    expect(
+      analyzeTeamIdentity(
+        createTeam(["Malphite", "JarvanIV", "Orianna", "Jinx", "Leona"]),
+      ).displayName,
+    ).not.toBe("Comp do Montanha");
 
     const protectCarry = analyzeTeamIdentity(
       createTeam(["Ornn", "Ivern", "Orianna", "KogMaw", "Janna"]),

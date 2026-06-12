@@ -47,6 +47,24 @@ const winConditionWeights: Record<
   "Map Pressure": weights(["globalPressure", 0.27], ["roaming", 0.24], ["mobility", 0.18], ["waveClear", 0.15], ["objectiveControl", 0.16]),
 };
 
+const mountainCompChampionIds = new Set([
+  "Malphite",
+  "JarvanIV",
+  "Orianna",
+  "Twitch",
+  "Leona",
+]);
+
+const getIdentityDisplayName = (
+  team: DraftTeam,
+  primaryWinCondition: WinConditionKey,
+) => {
+  const isMountainComp =
+    team.length === mountainCompChampionIds.size &&
+    team.every(({ champion }) => mountainCompChampionIds.has(champion.id));
+  return isMountainComp ? "Comp do Montanha" : primaryWinCondition;
+};
+
 const legacyMap: Record<WinConditionKey, TeamArchetype> = {
   "Early Snowball": "Early Snowball",
   Scaling: "Scaling",
@@ -431,6 +449,7 @@ export function analyzeTeamIdentity(team: DraftTeam): TeamIdentity {
 
   return {
     primaryWinCondition,
+    displayName: getIdentityDisplayName(team, primaryWinCondition),
     secondaryWinConditions,
     strengths,
     weaknesses,

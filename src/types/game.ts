@@ -340,6 +340,7 @@ export type WinConditionKey =
 
 export type TeamIdentity = {
   primaryWinCondition: WinConditionKey;
+  displayName: string;
   secondaryWinConditions: WinConditionKey[];
   strengths: string[];
   weaknesses: string[];

@@ -79,7 +79,7 @@ export function DraftComparisonPanel({
           <div className="draft-comparison__plans">
             <div className="draft-comparison__plan">
               <span>Seu plano</span>
-              <strong>{userIdentity.primaryWinCondition}</strong>
+              <strong>{userIdentity.displayName}</strong>
             </div>
             <div className="draft-comparison__plan">
               <span>Plano adversário</span>

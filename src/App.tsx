@@ -356,7 +356,7 @@ function App() {
                 <section className="review-quick-read panel">
                   <div>
                     <p className="eyebrow">LEITURA RÁPIDA</p>
-                    <h2>{teamScore.identity.primaryWinCondition}</h2>
+                    <h2>{teamScore.identity.displayName}</h2>
                     <p>{teamScore.winCondition}</p>
                   </div>
                   <span>
