@@ -125,6 +125,7 @@ const calculateSidePower = (
   const lateGame = minute >= 28;
   const userMetrics = userTeamScore.metrics;
   const modifiers = context.rogueModifiers;
+  const contextualImpact = context.rogueContextImpact;
   const goldDifference = stats.userGold - stats.enemyGold;
   const userPower =
     userTeamScore.total * 0.4 +
@@ -138,7 +139,8 @@ const calculateSidePower = (
     (goldDifference / 900) *
       (goldDifference > 0 ? modifiers?.snowballMultiplier ?? 1 : 1) +
     Math.max(0, -goldDifference / 1400) *
-      (modifiers?.comebackMultiplier ?? 1);
+      (modifiers?.comebackMultiplier ?? 1) +
+    (contextualImpact?.userPowerDelta ?? 0);
   const enemyPower =
     enemy.difficulty * 0.35 +
     enemy.draftCoherence * 0.16 +
@@ -148,7 +150,8 @@ const calculateSidePower = (
     (-goldDifference / 900) *
       (goldDifference < 0 ? modifiers?.snowballMultiplier ?? 1 : 1) +
     Math.max(0, goldDifference / 1400) *
-      (modifiers?.comebackMultiplier ?? 1);
+      (modifiers?.comebackMultiplier ?? 1) +
+    (contextualImpact?.enemyPowerDelta ?? 0);
   const expectedBias =
     context.expectedWinner === side
       ? minute < 18
@@ -172,12 +175,16 @@ const chooseSide = (
 ): MatchSide => {
   const userPower =
     calculateSidePower("User", minute, stats, userTeamScore, enemy, context) +
-    userTeamScore.metrics.objectiveControl * objectiveBias;
+    userTeamScore.metrics.objectiveControl * objectiveBias +
+    (objectiveBias > 0 ? context.rogueContextImpact?.userObjectivePower ?? 0 : 0);
   const enemyPower =
     calculateSidePower("Enemy", minute, stats, userTeamScore, enemy, context) +
-    enemy.modifiers.objectiveControl * 10 * objectiveBias;
+    enemy.modifiers.objectiveControl * 10 * objectiveBias +
+    (objectiveBias > 0 ? context.rogueContextImpact?.enemyObjectivePower ?? 0 : 0);
+  const lateGameBias =
+    minute >= 22 ? context.rogueContextImpact?.lateGameUserBias ?? 0 : 0;
   const userChance = clamp(
-    50 + (userPower - enemyPower) * 1.2 + strategicBias,
+    50 + (userPower - enemyPower) * 1.2 + strategicBias + lateGameBias,
     18,
     82,
   );
@@ -532,7 +539,8 @@ export function generateMinuteEvents(
 
   const fightChance =
     (minute < 14 ? 0.09 : minute < 28 ? 0.16 : 0.2) *
-    (modifiers?.fightChanceMultiplier ?? 1);
+    (modifiers?.fightChanceMultiplier ?? 1) *
+    (context.rogueContextImpact?.fightChanceMultiplier ?? 1);
   if (minute > 7 && Math.random() < fightChance) {
     const fightIdentity =
       minute < 14
@@ -646,7 +654,18 @@ export function generateMinuteEvents(
         getLaneTowerCount(currentStats.structures, lane, defendingSide) > 0,
     );
     if (availableLanes.length) {
-      const zone = pickRandom(availableLanes);
+      const preferredLane = (
+        Object.entries(context.rogueContextImpact?.userLanePressure ?? {}) as [
+          LaneZone,
+          number,
+        ][]
+      )
+        .filter(([lane, pressure]) => pressure > 0 && availableLanes.includes(lane))
+        .sort(([, left], [, right]) => right - left)[0]?.[0];
+      const zone =
+        side === "User" && preferredLane && Math.random() < 0.65
+          ? preferredLane
+          : pickRandom(availableLanes);
       events.push(
         createEvent(
           minute,

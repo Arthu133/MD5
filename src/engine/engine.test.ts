@@ -40,6 +40,7 @@ import {
   getRandomRogueCardOptions,
   refreshRogueCardOptions,
 } from "./rogueCardEngine";
+import { evaluateRogueCardContext } from "./rogueCardContextEngine";
 import { calculateRoleFit } from "./roleEngine";
 import {
   canUseRefresh,
@@ -53,7 +54,10 @@ import {
   prepareRogueCampaignMatch,
   simulateCampaign,
 } from "./simulationEngine";
-import { calculateTeamScore } from "./synergyEngine";
+import {
+  calculateObjectiveReadiness,
+  calculateTeamScore,
+} from "./synergyEngine";
 import { analyzeTeamIdentity } from "./teamIdentityEngine";
 
 const getChampion = (id: string) =>
@@ -130,7 +134,7 @@ describe("MD5 roguelike engine", () => {
     expect(pokeSiege.primaryWinCondition).toBe("Poke / Siege");
 
     const womboCombo = analyzeTeamIdentity(
-      createTeam(["Malphite", "JarvanIV", "Orianna", "MissFortune", "Leona"]),
+      createTeam(["Malphite", "JarvanIV", "Orianna", "Twitch", "Leona"]),
     );
     expect(womboCombo.primaryWinCondition).toBe("Wombo Combo");
     expect(womboCombo.secondaryWinConditions).toEqual(
@@ -285,7 +289,12 @@ describe("MD5 roguelike engine", () => {
         activeCards: [],
         difficulty: "Classic",
       });
-      const enhanced = applyRogueCardsToChampionStats(team, active, "Groups");
+      const enhanced = applyRogueCardsToChampionStats(
+        team,
+        active,
+        "Groups",
+        "UserTeam",
+      );
       const enhancedScore = applyRogueCardsToTeamScore(
         calculateTeamScore(enhanced, "Classic"),
         active,
@@ -571,5 +580,251 @@ describe("MD5 roguelike engine", () => {
       UltraFast: 2_000,
     });
     expect(calculateMatchTickMs("UltraFast", 35)).toBe(57);
+  });
+
+  it("registra as nove cartas contextuais com mecanicas distintas", () => {
+    const expected = {
+      "capitao-do-time": "TeamCaptain",
+      "ultima-chance": "LastChance",
+      "dive-irresponsavel": "RecklessDive",
+      "draft-lendario": "LegendaryDraft",
+      "erro-fatal": "FatalError",
+      "jungler-culpado": "JungleFocus",
+      "bot-gap": "BotFocus",
+      "top-ilha": "TopIsland",
+      "mid-kingdom": "MidKingdom",
+    } as const;
+
+    Object.entries(expected).forEach(([id, mechanic]) => {
+      const card = rogueCards.find((entry) => entry.id === id);
+      expect(card?.mechanic).toBe(mechanic);
+      expect(card?.description.split(/\s+/).length).toBeLessThanOrEqual(12);
+    });
+  });
+
+  it("oferece Ultima Chance apenas fora dos grupos", () => {
+    const groupOptions = getRandomRogueCardOptions(
+      [],
+      rogueCards.length,
+      [],
+      {
+        stage: "Groups",
+        seriesUserWins: 0,
+        seriesEnemyWins: 0,
+      },
+    );
+    const knockoutOptions = getRandomRogueCardOptions(
+      [],
+      rogueCards.length,
+      [],
+      {
+        stage: "Quarterfinals",
+        seriesUserWins: 0,
+        seriesEnemyWins: 1,
+      },
+    );
+
+    expect(groupOptions.some((card) => card.id === "ultima-chance")).toBe(false);
+    expect(knockoutOptions.some((card) => card.id === "ultima-chance")).toBe(true);
+  });
+
+  it("aplica cartas contextuais apenas ao lado indicado", () => {
+    const team = createTeam();
+    const card = rogueCards.find((entry) => entry.id === "jungler-culpado")!;
+    const active = addRogueCardToCampaign([], card, {
+      matchId: "Groups-1",
+      stage: "Groups",
+      userTeam: team,
+      enemyTeam: team,
+      enemyName: "Teste",
+      enemyArchetype: "Balanced",
+      activeCards: [],
+      difficulty: "Classic",
+    });
+    const originalJungle = team.find((build) => build.role === "Jungle")!;
+    const userTeam = applyRogueCardsToChampionStats(
+      team,
+      active,
+      "Groups",
+      "UserTeam",
+    );
+    const enemyTeam = applyRogueCardsToChampionStats(
+      team,
+      active,
+      "Groups",
+      "EnemyTeam",
+    );
+
+    expect(
+      userTeam.find((build) => build.role === "Jungle")!.champion.stats
+        .objectiveControl,
+    ).toBeGreaterThan(originalJungle.champion.stats.objectiveControl);
+    expect(
+      enemyTeam.find((build) => build.role === "Jungle")!.champion.stats
+        .objectiveControl,
+    ).toBe(originalJungle.champion.stats.objectiveControl);
+  });
+
+  it("ativa comeback e risco contextual sem ultrapassar os limites", () => {
+    const userTeam = createTeam();
+    const enemyTeam = createTeam([
+      "Renekton",
+      "LeeSin",
+      "Pantheon",
+      "Draven",
+      "Nautilus",
+    ]);
+    const userScore = calculateTeamScore(userTeam, "Classic");
+    const enemyScore = calculateTeamScore(enemyTeam, "Classic");
+    const activeFor = (id: string) => [
+      {
+        card: rogueCards.find((entry) => entry.id === id)!,
+        pickedBeforeMatchId: "Quarterfinals-1",
+        pickedAtStage: "Quarterfinals" as const,
+      },
+    ];
+    const tied = evaluateRogueCardContext({
+      userTeam,
+      enemyTeam,
+      userScore,
+      enemyScore,
+      activeCards: activeFor("ultima-chance"),
+      difficulty: "Classic",
+      stage: "Quarterfinals",
+      seriesUserWins: 1,
+      seriesEnemyWins: 1,
+    });
+    const behind = evaluateRogueCardContext({
+      userTeam,
+      enemyTeam,
+      userScore,
+      enemyScore,
+      activeCards: activeFor("ultima-chance"),
+      difficulty: "Classic",
+      stage: "Quarterfinals",
+      seriesUserWins: 0,
+      seriesEnemyWins: 2,
+    });
+    const dive = evaluateRogueCardContext({
+      userTeam: enemyTeam,
+      enemyTeam: userTeam,
+      userScore: enemyScore,
+      enemyScore: userScore,
+      activeCards: activeFor("dive-irresponsavel"),
+      difficulty: "Classic",
+      stage: "Quarterfinals",
+      seriesUserWins: 0,
+      seriesEnemyWins: 0,
+    });
+
+    expect(tied.userPowerDelta).toBe(0);
+    expect(behind.userPowerDelta).toBeGreaterThan(0);
+    expect(behind.userPowerDelta).toBeLessThanOrEqual(8);
+    expect(dive.fightChanceMultiplier).toBeGreaterThan(1);
+    expect(dive.varianceMultiplier).toBeGreaterThan(1);
+    expect(dive.userPowerDelta).toBeLessThanOrEqual(8);
+    expect(dive.enemyPowerDelta).toBeLessThanOrEqual(8);
+  });
+
+  it("faz todas as mecanicas contextuais alterarem a leitura da partida", () => {
+    const userTeam = createTeam([
+      "Fiora",
+      "Nunu",
+      "TwistedFate",
+      "KogMaw",
+      "Janna",
+    ]);
+    const enemyTeam = createTeam([
+      "Ornn",
+      "Ivern",
+      "Soraka",
+      "Vayne",
+      "Yuumi",
+    ]);
+    const userScore = calculateTeamScore(userTeam, "Classic");
+    const enemyScore = calculateTeamScore(enemyTeam, "Classic");
+    const impactFor = (
+      id: string,
+      seriesUserWins = 0,
+      seriesEnemyWins = 1,
+    ) =>
+      evaluateRogueCardContext({
+        userTeam,
+        enemyTeam,
+        userScore,
+        enemyScore,
+        activeCards: [
+          {
+            card: rogueCards.find((entry) => entry.id === id)!,
+            pickedBeforeMatchId: "Quarterfinals-1",
+            pickedAtStage: "Quarterfinals",
+          },
+        ],
+        difficulty: "Classic",
+        stage: "Quarterfinals",
+        seriesUserWins,
+        seriesEnemyWins,
+      });
+
+    const captain = impactFor("capitao-do-time");
+    const lastChance = impactFor("ultima-chance", 0, 2);
+    const recklessDive = impactFor("dive-irresponsavel");
+    const legendaryDraft = impactFor("draft-lendario");
+    const fatalError = impactFor("erro-fatal");
+    const jungleFocus = impactFor("jungler-culpado");
+    const botFocus = impactFor("bot-gap");
+    const topIsland = impactFor("top-ilha");
+    const midKingdom = impactFor("mid-kingdom");
+
+    expect(captain.captainName).toBeTruthy();
+    expect(captain.userPowerDelta + captain.enemyPowerDelta).toBeGreaterThan(0);
+    expect(lastChance.userPowerDelta).toBeGreaterThan(0);
+    expect(recklessDive.fightChanceMultiplier).toBeGreaterThan(1);
+    expect(legendaryDraft.userPowerDelta).toBeGreaterThan(0);
+    expect(fatalError.varianceMultiplier).toBeGreaterThan(1);
+    expect(
+      jungleFocus.userObjectivePower + jungleFocus.enemyObjectivePower,
+    ).toBeGreaterThan(0);
+    expect(botFocus.userLanePressure.BotLane ?? 0).toBeGreaterThan(0);
+    expect(topIsland.userLanePressure.TopLane ?? 0).toBeGreaterThan(0);
+    expect(midKingdom.userLanePressure.MidLane ?? 0).toBeGreaterThan(0);
+  });
+
+  it("calcula objetivos pela composicao completa", () => {
+    const objectiveTeam = createTeam([
+      "Ornn",
+      "Nunu",
+      "Orianna",
+      "Kalista",
+      "Maokai",
+    ]);
+    const lowControlTeam = createTeam([
+      "Fiora",
+      "Shaco",
+      "Katarina",
+      "Vayne",
+      "Yuumi",
+    ]);
+    const objectiveScore = calculateObjectiveReadiness(
+      objectiveTeam,
+      "Classic",
+    );
+    const lowControlScore = calculateObjectiveReadiness(
+      lowControlTeam,
+      "Classic",
+    );
+
+    expect(objectiveScore).toBeGreaterThan(lowControlScore);
+    expect(objectiveScore - lowControlScore).toBeGreaterThanOrEqual(8);
+    const finalObjectiveScore = calculateTeamScore(
+      objectiveTeam,
+      "Classic",
+    ).metrics.objectiveControl;
+    const finalLowControlScore = calculateTeamScore(
+      lowControlTeam,
+      "Classic",
+    ).metrics.objectiveControl;
+    expect(finalObjectiveScore).toBeGreaterThan(finalLowControlScore);
+    expect(Math.abs(finalObjectiveScore - objectiveScore)).toBeLessThanOrEqual(3);
   });
 });

@@ -1,6 +1,8 @@
 import type {
   RogueCard,
   RogueCardEffect,
+  RogueCardEffectTarget,
+  RogueCardMechanic,
   RogueCardRarity,
 } from "../types/game";
 
@@ -26,16 +28,35 @@ const card = (
   rarity: RogueCardRarity,
   effects: RogueCardEffect[],
   tags: string[] = [],
+  options: {
+    mechanic?: RogueCardMechanic;
+    target?: RogueCardEffectTarget[];
+  } = {},
 ): RogueCard => ({
   id,
   name,
   description,
   rarity,
+  mechanic: options.mechanic,
   timing: ["Campaign", "Match", "Simulation"],
-  target: ["BothTeams", "Tournament", "LiveMatchEngine"],
+  target: options.target ?? ["BothTeams", "Tournament", "LiveMatchEngine"],
   tags,
   effects,
 });
+
+const contextualCard = (
+  id: string,
+  name: string,
+  description: string,
+  rarity: RogueCardRarity,
+  mechanic: RogueCardMechanic,
+  effects: RogueCardEffect[],
+  tags: string[],
+) =>
+  card(id, name, description, rarity, effects, tags, {
+    mechanic,
+    target: ["UserTeam", "LiveMatchEngine"],
+  });
 
 const metric = (
   name: string,
@@ -130,11 +151,11 @@ export const rogueCards: RogueCard[] = [
     attribute("protectCarry", 8, { roles: ["Support"] }),
     attribute("peel", 7, { roles: ["Support"] }),
   ], ["bot", "protect"]),
-  card("top-ilha", "Top Ilha", "Top ganha duelo e pressão lateral.", "Common", [
-    attribute("splitPush", 10, { roles: ["Top"] }),
+  contextualCard("top-ilha", "Top Ilha", "O topo decide pela pressão lateral.", "Rare", "TopIsland", [
+    attribute("splitPush", 9, { roles: ["Top"] }),
     attribute("duelist", 8, { roles: ["Top"] }),
-    attribute("sustain", 6, { roles: ["Top"] }),
-    rule("towerChanceMultiplier", 1.08, "multiply"),
+    attribute("sustain", 5, { roles: ["Top"] }),
+    rule("towerChanceMultiplier", 1.1, "multiply"),
   ], ["top", "split"]),
   card("jungle-dominante", "Jungle Dominante", "Jungle controla ritmo, mapa e objetivos.", "Rare", [
     attribute("junglePressure", 10, { roles: ["Jungle"] }),
@@ -332,6 +353,47 @@ export const rogueCards: RogueCard[] = [
     rule("nexusResistance", 0.3),
     rule("durationMinutes", 4),
   ], ["base", "comeback"]),
+  contextualCard("capitao-do-time", "Capitão do Time", "Uma peça central carrega o plano.", "Epic", "TeamCaptain", [
+    metric("cardSynergy", 2),
+    metric("rulesAdaptation", 2),
+  ], ["captain", "identity"]),
+  contextualCard("ultima-chance", "Última Chance", "Comeback ganha valor quando a série aperta.", "Epic", "LastChance", [
+    attribute("comeback", 6),
+    attribute("scaling", 3),
+    metric("consistency", 2),
+  ], ["series", "comeback"]),
+  contextualCard("dive-irresponsavel", "Dive Irresponsável", "Dive forte acelera; execução ruim entrega.", "Rare", "RecklessDive", [
+    attribute("dive", 7),
+    attribute("engage", 4),
+    attribute("highRisk", 6),
+    rule("varianceMultiplier", 1.16, "multiply"),
+  ], ["dive", "risk"]),
+  contextualCard("draft-lendario", "Draft Lendário", "Identidade clara transforma sinergia em vantagem.", "Legendary", "LegendaryDraft", [
+    metric("cardSynergy", 4),
+    metric("rulesAdaptation", 2),
+  ], ["draft", "identity"]),
+  contextualCard("erro-fatal", "Erro Fatal", "Visão e posicionamento punem erros tardios.", "Epic", "FatalError", [
+    attribute("visionControl", 5),
+    attribute("pickoff", 4),
+    rule("varianceMultiplier", 1.12, "multiply"),
+  ], ["late", "risk"]),
+  contextualCard("jungler-culpado", "Jungler Culpado", "Jungle e objetivos carregam mais responsabilidade.", "Rare", "JungleFocus", [
+    attribute("junglePressure", 8, { roles: ["Jungle"] }),
+    attribute("objectiveControl", 8, { roles: ["Jungle"] }),
+    rule("objectiveValueMultiplier", 1.15, "multiply"),
+  ], ["jungle", "objective"]),
+  contextualCard("bot-gap", "Bot Gap", "Carry e suporte decidem dragões e lutas.", "Rare", "BotFocus", [
+    attribute("dps", 6, { roles: ["Carry"] }),
+    attribute("hypercarry", 5, { roles: ["Carry"] }),
+    attribute("peel", 5, { roles: ["Support"] }),
+    rule("dragonValueMultiplier", 1.1, "multiply"),
+  ], ["bot", "dragon"]),
+  contextualCard("mid-kingdom", "Mid Kingdom", "Prioridade central espalha pressão pelo mapa.", "Rare", "MidKingdom", [
+    attribute("roaming", 7, { roles: ["Mid"] }),
+    attribute("waveClear", 6, { roles: ["Mid"] }),
+    attribute("pickoff", 5, { roles: ["Mid"] }),
+    rule("objectiveValueMultiplier", 1.08, "multiply"),
+  ], ["mid", "map"]),
 ];
 
 const wordCount = (value: string) => value.trim().split(/\s+/).length;
@@ -352,7 +414,10 @@ export function validateRogueCards(cards: RogueCard[]): string[] {
     if (
       !entry.effects.some(
         (cardEffect) =>
-          cardEffect.attribute || cardEffect.stat || cardEffect.rule,
+          cardEffect.attribute ||
+          cardEffect.stat ||
+          cardEffect.metric ||
+          cardEffect.rule,
       )
     ) {
       errors.push(`${entry.id}: sem impacto direto no draft ou partida`);

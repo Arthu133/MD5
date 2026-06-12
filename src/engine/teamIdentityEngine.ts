@@ -33,8 +33,8 @@ const winConditionWeights: Record<
   "Poke / Siege": weights(["poke", 0.32], ["siege", 0.25], ["longRange", 0.18], ["waveClear", 0.16], ["zoneControl", 0.09]),
   Dive: weights(["dive", 0.32], ["mobility", 0.2], ["engage", 0.2], ["burst", 0.16], ["frontline", 0.12]),
   "Protect the Carry": weights(["protectCarry", 0.28], ["hypercarry", 0.22], ["peel", 0.2], ["shielding", 0.11], ["healing", 0.08], ["frontline", 0.11]),
-  "Objective Control": weights(["objectiveControl", 0.37], ["junglePressure", 0.21], ["visionControl", 0.15], ["teamFight", 0.14], ["earlyGame", 0.13]),
-  "Dragon Stacking": weights(["objectiveControl", 0.37], ["earlyGame", 0.2], ["junglePressure", 0.2], ["teamFight", 0.13], ["visionControl", 0.1]),
+  "Objective Control": weights(["objectiveControl", 0.24], ["junglePressure", 0.17], ["visionControl", 0.12], ["teamFight", 0.11], ["dps", 0.09], ["zoneControl", 0.08], ["earlyGame", 0.07], ["pickoff", 0.06], ["waveClear", 0.06]),
+  "Dragon Stacking": weights(["objectiveControl", 0.23], ["earlyGame", 0.14], ["junglePressure", 0.17], ["teamFight", 0.1], ["visionControl", 0.09], ["dps", 0.1], ["zoneControl", 0.07], ["laneBully", 0.1]),
   "Baron Pressure": weights(["objectiveControl", 0.27], ["dps", 0.23], ["siege", 0.18], ["visionControl", 0.16], ["pickoff", 0.16]),
   "Front-to-Back": weights(["frontline", 0.28], ["dps", 0.23], ["peel", 0.2], ["teamFight", 0.16], ["scaling", 0.13]),
   "Side Lane Pressure": weights(["splitPush", 0.3], ["duelist", 0.21], ["globalPressure", 0.18], ["waveClear", 0.15], ["mobility", 0.16]),
@@ -258,9 +258,47 @@ const applyStructuralRules = (
     }
     case "Objective Control":
     case "Dragon Stacking": {
-      const controllers = contributors(["objectiveControl", "junglePressure", "visionControl"], 80);
-      score = capIfMissing(score + controllers * 2, controllers >= 2, 48);
-      if (condition === "Dragon Stacking") score -= 4;
+      const controllers = contributors(
+        ["objectiveControl", "junglePressure", "visionControl"],
+        76,
+      );
+      const objectiveFight = contributors(
+        ["teamFight", "zoneControl", "pickoff", "crowdControl"],
+        76,
+      );
+      const damage = contributors(["dps", "antiTank", "siege"], 76);
+      const jungle = team.find(({ role }) => role === "Jungle");
+      const jungleReady = Boolean(
+        jungle &&
+          championContribution(jungle.champion, [
+            "objectiveControl",
+            "junglePressure",
+          ]) >= 74,
+      );
+      score = capIfMissing(
+        score +
+          controllers * 1.8 +
+          objectiveFight * 1.1 +
+          damage * 0.9 +
+          (jungleReady ? 7 : -5),
+        jungleReady && controllers >= 2 && (objectiveFight >= 2 || damage >= 2),
+        47,
+      );
+      if (condition === "Dragon Stacking") {
+        const botPriority = team
+          .filter(({ role }) => role === "Carry" || role === "Support")
+          .filter(
+            ({ champion }) =>
+              championContribution(champion, [
+                "earlyGame",
+                "laneBully",
+                "dps",
+                "engage",
+                "visionControl",
+              ]) >= 74,
+          ).length;
+        score += botPriority * 1.5 - 3;
+      }
       break;
     }
     case "Baron Pressure": {

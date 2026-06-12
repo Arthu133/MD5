@@ -579,6 +579,17 @@ export type RogueCardId = string;
 
 export type RogueCardRarity = "Common" | "Rare" | "Epic" | "Legendary";
 
+export type RogueCardMechanic =
+  | "TeamCaptain"
+  | "LastChance"
+  | "RecklessDive"
+  | "LegendaryDraft"
+  | "FatalError"
+  | "JungleFocus"
+  | "BotFocus"
+  | "TopIsland"
+  | "MidKingdom";
+
 export type RogueCardTiming =
   | "Campaign"
   | "Match"
@@ -668,6 +679,7 @@ export type RogueCard = {
   name: string;
   description: string;
   rarity: RogueCardRarity;
+  mechanic?: RogueCardMechanic;
   timing: RogueCardTiming[];
   target: RogueCardEffectTarget[];
   tags: string[];
@@ -689,6 +701,26 @@ export type CardPickContext = {
   enemyArchetype: TeamArchetype;
   activeCards: ActiveRogueCard[];
   difficulty: GameDifficulty;
+};
+
+export type RogueCardOfferContext = {
+  stage: TournamentStage;
+  seriesUserWins: number;
+  seriesEnemyWins: number;
+};
+
+export type RogueCardContextImpact = {
+  userPowerDelta: number;
+  enemyPowerDelta: number;
+  userObjectivePower: number;
+  enemyObjectivePower: number;
+  fightChanceMultiplier: number;
+  varianceMultiplier: number;
+  lateGameUserBias: number;
+  userLanePressure: Partial<
+    Record<"TopLane" | "MidLane" | "BotLane", number>
+  >;
+  captainName?: string;
 };
 
 export type MatchEventType =
@@ -789,6 +821,7 @@ export type MatchContext = {
   enemyTeam?: DraftTeam;
   activeCards?: ActiveRogueCard[];
   rogueModifiers?: RogueRuleModifiers;
+  rogueContextImpact?: RogueCardContextImpact;
 };
 
 export type LiveMatchSimulation = {

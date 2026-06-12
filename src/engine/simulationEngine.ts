@@ -28,6 +28,7 @@ import {
   getRandomRogueCardOptions,
   getRogueCardSummaryForMatch,
 } from "./rogueCardEngine";
+import { evaluateRogueCardContext } from "./rogueCardContextEngine";
 import { calculateTeamScore } from "./synergyEngine";
 import {
   analyzeTeamIdentity,
@@ -158,6 +159,7 @@ export function createRogueCampaignState(
 const calculateSeriesConsistencyPenalty = (
   teamScore: TeamScore,
   activeCards: ActiveRogueCard[],
+  difficulty: GameDifficulty,
 ) => {
   const metrics = teamScore.metrics;
   const modifiers = applyRogueCardsToLiveMatch(activeCards);
@@ -172,7 +174,11 @@ const calculateSeriesConsistencyPenalty = (
   penalty -= modifiers.mentalReset * 0.3;
   if (teamScore.archetype === "Early Snowball" && metrics.scaling < 50) penalty += 2.5;
   if (Math.min(metrics.physicalDamage, metrics.magicDamage) < 24) penalty += 3;
-  return Math.max(0, Math.round(penalty * 10) / 10);
+  const difficultyMultiplier = difficulty === "Classic" ? 0.86 : 1;
+  return Math.max(
+    0,
+    Math.round(penalty * difficultyMultiplier * 10) / 10,
+  );
 };
 
 const punishedWeaknessPenalty = (
@@ -241,13 +247,40 @@ export function simulateCompetitiveGame(
   const seriesPenalty =
     stage === "Groups"
       ? 0
-      : calculateSeriesConsistencyPenalty(teamScore, activeCards);
+      : calculateSeriesConsistencyPenalty(
+          teamScore,
+          activeCards,
+          difficulty,
+        );
   const matchupAdvantage =
     matchupMatrix[teamScore.archetype][enemy.archetype] ?? 0;
   const identityAdvantage = calculateIdentityMatchupAdvantage(
     teamScore.identity,
     analyzeTeamIdentity(enemy.simulatedDraft),
   );
+  const contextualEnemyTeam = applyRogueCardsToChampionStats(
+    enemy.simulatedDraft,
+    activeCards,
+    stage,
+    "EnemyTeam",
+  );
+  const contextualEnemyScore = applyRogueCardsToTeamScore(
+    calculateTeamScore(contextualEnemyTeam, difficulty),
+    activeCards,
+    stage,
+    "EnemyTeam",
+  );
+  const contextualImpact = evaluateRogueCardContext({
+    userTeam,
+    enemyTeam: contextualEnemyTeam,
+    userScore: teamScore,
+    enemyScore: contextualEnemyScore,
+    activeCards,
+    difficulty,
+    stage,
+    seriesUserWins: currentUserWins,
+    seriesEnemyWins: currentEnemyWins,
+  });
   const userQuality =
     teamScore.total * 0.56 +
     metrics.cardSynergy * 0.11 +
@@ -268,7 +301,9 @@ export function simulateCompetitiveGame(
       : Math.max(0, gameNumber - 1) *
         (enemy.tier === "Champion" ? 1.3 : enemy.tier === "Elite" ? 0.9 : 0.55);
   const variance =
-    randomVarianceByStage[difficulty][stage] * modifiers.varianceMultiplier;
+    randomVarianceByStage[difficulty][stage] *
+    modifiers.varianceMultiplier *
+    contextualImpact.varianceMultiplier;
   const randomness = (Math.random() * 2 - 1) * variance;
   const groupBonus =
     stage === "Groups" &&
@@ -283,6 +318,21 @@ export function simulateCompetitiveGame(
     currentUserWins > currentEnemyWins
       ? modifiers.momentum * (currentUserWins - currentEnemyWins)
       : -modifiers.momentum * 0.4 * (currentEnemyWins - currentUserWins);
+  const classicDraftReward =
+    difficulty === "Classic"
+      ? Math.min(
+          5,
+          Math.max(0, teamScore.identity.confidence - 48) * 0.05 +
+            Math.max(0, teamScore.winConditionClarity - 52) * 0.045 +
+            Math.max(0, metrics.objectiveControl - 52) * 0.018,
+        )
+      : 0;
+  const classicSeriesRecovery =
+    difficulty === "Classic" && currentEnemyWins > currentUserWins
+      ? Math.min(2.5, 0.8 + (currentEnemyWins - currentUserWins) * 0.7)
+      : 0;
+  const contextualAdvantage =
+    contextualImpact.userPowerDelta - contextualImpact.enemyPowerDelta;
   const chance = clamp(
     50 +
       (userQuality - enemyQuality) * 1.15 +
@@ -294,6 +344,9 @@ export function simulateCompetitiveGame(
       groupBonus -
       stagePressure +
       momentumBonus +
+      classicDraftReward +
+      classicSeriesRecovery +
+      contextualAdvantage +
       randomness,
   );
   const win = Math.random() * 100 < chance;
@@ -309,6 +362,7 @@ export function simulateCompetitiveGame(
     seriesEnemyWins: currentEnemyWins + (win ? 0 : 1),
     activeCards,
     rogueModifiers: modifiers,
+    rogueContextImpact: contextualImpact,
   };
   const matchContext = applyRogueCardsToMatchContext(
     userTeam,
@@ -356,12 +410,14 @@ export function prepareRogueCampaignMatch(
     state.team,
     activeCards,
     state.currentStage,
+    "UserTeam",
   );
   const recalculated = calculateTeamScore(enhancedTeam, state.difficulty);
   const teamScore = applyRogueCardsToTeamScore(
     recalculated,
     activeCards,
     state.currentStage,
+    "UserTeam",
   );
   const enemy = applyRogueCardsToEnemy(state.currentEnemy, activeCards);
   const match = simulateCompetitiveGame(
@@ -395,7 +451,11 @@ const completeSeries = (
   seriesConsistencyPenalty:
     state.currentStage === "Groups"
       ? 0
-      : calculateSeriesConsistencyPenalty(state.teamScore, state.activeCards),
+      : calculateSeriesConsistencyPenalty(
+          state.teamScore,
+          state.activeCards,
+          state.difficulty,
+        ),
 });
 
 export function advanceRogueCampaignState(
@@ -555,7 +615,11 @@ export function simulateCampaign(
     const needsCard =
       state.currentStage === "Groups" || state.currentGames.length === 0;
     const card = needsCard
-      ? getRandomRogueCardOptions(state.activeCards, 1)[0]
+      ? getRandomRogueCardOptions(state.activeCards, 1, [], {
+          stage: state.currentStage,
+          seriesUserWins: state.currentUserWins,
+          seriesEnemyWins: state.currentEnemyWins,
+        })[0]
       : undefined;
     if (needsCard && !card) break;
     const prepared = prepareRogueCampaignMatch(state, card);

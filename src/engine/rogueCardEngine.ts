@@ -9,6 +9,8 @@ import type {
   RogueCard,
   RogueCardCondition,
   RogueCardEffect,
+  RogueCardEffectTarget,
+  RogueCardOfferContext,
   RogueRuleModifiers,
   TeamMetrics,
   TeamScore,
@@ -56,11 +58,34 @@ const rarityWeight: Record<RogueCard["rarity"], number> = {
   Legendary: 5,
 };
 
-const weightedPick = (pool: RogueCard[]) => {
-  const total = pool.reduce((sum, entry) => sum + rarityWeight[entry.rarity], 0);
+const offerWeight = (
+  card: RogueCard,
+  context?: RogueCardOfferContext,
+) => {
+  let weight = rarityWeight[card.rarity];
+  if (card.mechanic === "LastChance") {
+    if (context?.stage === "Groups") return 0;
+    if (
+      context &&
+      context.seriesEnemyWins > context.seriesUserWins
+    ) {
+      weight *= 2.4;
+    }
+  }
+  return weight;
+};
+
+const weightedPick = (
+  pool: RogueCard[],
+  context?: RogueCardOfferContext,
+) => {
+  const total = pool.reduce(
+    (sum, entry) => sum + offerWeight(entry, context),
+    0,
+  );
   let cursor = Math.random() * total;
   for (const entry of pool) {
-    cursor -= rarityWeight[entry.rarity];
+    cursor -= offerWeight(entry, context);
     if (cursor <= 0) return entry;
   }
   return pool[pool.length - 1];
@@ -70,16 +95,20 @@ export function getRandomRogueCardOptions(
   activeCards: ActiveRogueCard[] = [],
   count = 3,
   excludedIds: string[] = [],
+  context?: RogueCardOfferContext,
 ): RogueCard[] {
   const unavailable = new Set([
     ...activeCards.map((entry) => entry.card.id),
     ...excludedIds,
   ]);
-  const pool = rogueCards.filter((entry) => !unavailable.has(entry.id));
+  const pool = rogueCards.filter(
+    (entry) =>
+      !unavailable.has(entry.id) && offerWeight(entry, context) > 0,
+  );
   const selected: RogueCard[] = [];
 
   while (pool.length && selected.length < count) {
-    const picked = weightedPick(pool);
+    const picked = weightedPick(pool, context);
     selected.push(picked);
     pool.splice(pool.indexOf(picked), 1);
   }
@@ -90,11 +119,13 @@ export function refreshRogueCardOptions(
   activeCards: ActiveRogueCard[],
   previousOptions: RogueCard[],
   count = 3,
+  context?: RogueCardOfferContext,
 ) {
   return getRandomRogueCardOptions(
     activeCards,
     count,
     previousOptions.map((entry) => entry.id),
+    context,
   );
 }
 
@@ -163,6 +194,13 @@ const matchesCondition = (
   return true;
 };
 
+const cardAppliesTo = (
+  card: RogueCard,
+  target: RogueCardEffectTarget,
+) =>
+  card.target.includes("BothTeams") ||
+  card.target.includes(target);
+
 export function getRogueRuleModifiers(
   activeCards: ActiveRogueCard[],
 ): RogueRuleModifiers {
@@ -184,6 +222,7 @@ export function applyRogueCardsToChampionStats(
   team: DraftTeam,
   activeCards: ActiveRogueCard[],
   stage?: TournamentStage,
+  target: RogueCardEffectTarget = "BothTeams",
 ): DraftTeam {
   return team.map((build) => {
     let champion = {
@@ -194,6 +233,7 @@ export function applyRogueCardsToChampionStats(
       })),
     };
     activeCards.forEach(({ card }) => {
+      if (!cardAppliesTo(card, target)) return;
       card.effects.forEach((entry) => {
         if (!matchesCondition(entry.condition, build, undefined, stage)) return;
         if (entry.attribute) {
@@ -221,9 +261,13 @@ export function applyRogueCardsToTeamScore(
   baseScore: TeamScore,
   activeCards: ActiveRogueCard[],
   stage?: TournamentStage,
+  target: RogueCardEffectTarget = "BothTeams",
 ): TeamScore {
   const metrics = { ...baseScore.metrics };
-  activeCards.forEach(({ card }) => {
+  const applicableCards = activeCards.filter(({ card }) =>
+    cardAppliesTo(card, target),
+  );
+  applicableCards.forEach(({ card }) => {
     card.effects.forEach((entry) => {
       if (
         !entry.metric ||
@@ -236,7 +280,7 @@ export function applyRogueCardsToTeamScore(
   });
 
   const modifiers = getRogueRuleModifiers(activeCards);
-  const conditionalScoreCapModifier = activeCards.reduce((total, { card }) => {
+  const conditionalScoreCapModifier = applicableCards.reduce((total, { card }) => {
     return (
       total +
       card.effects.reduce((cardTotal, entry) => {
@@ -252,12 +296,15 @@ export function applyRogueCardsToTeamScore(
   }, 0);
   metrics.cardSynergy = clamp(
     metrics.cardSynergy +
-      activeCards.length * 1.5 +
-      Math.min(12, new Set(activeCards.flatMap(({ card }) => card.tags)).size),
+      applicableCards.length * 1.5 +
+      Math.min(
+        12,
+        new Set(applicableCards.flatMap(({ card }) => card.tags)).size,
+      ),
   );
   metrics.rulesAdaptation = clamp(
     metrics.rulesAdaptation +
-      Math.min(18, activeCards.length * 2) +
+      Math.min(18, applicableCards.length * 2) +
       modifiers.offMetaModifier * 0.25,
   );
   const metricDelta =
@@ -299,12 +346,14 @@ export function applyRogueCardsToEnemy(
     enemy.simulatedDraft,
     activeCards,
     enemy.stage,
+    "EnemyTeam",
   );
   const baseDraftScore = calculateTeamScore(enemy.simulatedDraft, "Classic");
   const enhancedDraftScore = applyRogueCardsToTeamScore(
     calculateTeamScore(enhancedDraft, "Classic"),
     activeCards,
     enemy.stage,
+    "EnemyTeam",
   );
   const cardDelta = enhancedDraftScore.total - baseDraftScore.total;
   const rulesAdaptation = clamp(
@@ -344,11 +393,13 @@ export function applyRogueCardsToMatchContext(
       userTeam,
       activeCards,
       context.stage,
+      "UserTeam",
     ),
     enemyTeam: applyRogueCardsToChampionStats(
       enemyTeam,
       activeCards,
       context.stage,
+      "EnemyTeam",
     ),
     activeCards,
     rogueModifiers: getRogueRuleModifiers(activeCards),

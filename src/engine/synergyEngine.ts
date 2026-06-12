@@ -1,4 +1,5 @@
 import type {
+  ChampionAttributeKey,
   DraftTeam,
   GameDifficulty,
   ScoreCapReason,
@@ -8,6 +9,7 @@ import type {
   TeamMetrics,
   TeamScore,
 } from "../types/game";
+import { getChampionAttributeValue } from "../data/champions/championAttributes";
 import { calculateRoleFit } from "./roleEngine";
 import { analyzeTeamIdentity } from "./teamIdentityEngine";
 
@@ -21,6 +23,82 @@ const average = (values: number[]) =>
 
 const statsFor = (team: DraftTeam): StrategicStats[] =>
   team.map((build) => build.champion.stats);
+
+const teamAttributeAverage = (
+  team: DraftTeam,
+  key: ChampionAttributeKey,
+) =>
+  average(
+    team.map(({ champion }) => getChampionAttributeValue(champion, key)),
+  );
+
+const roleAttributeAverage = (
+  team: DraftTeam,
+  role: DraftTeam[number]["role"],
+  keys: ChampionAttributeKey[],
+) => {
+  const build = team.find((entry) => entry.role === role);
+  return build
+    ? average(
+        keys.map((key) => getChampionAttributeValue(build.champion, key)),
+      )
+    : 0;
+};
+
+export function calculateObjectiveReadiness(
+  team: DraftTeam,
+  difficulty: GameDifficulty = "Classic",
+): number {
+  if (!team.length) return 0;
+  const roleFits = team.map((build) =>
+    calculateRoleFit(build.champion, build.role, difficulty).score,
+  );
+  const roleFit = average(roleFits);
+  const rawObjective = average(
+    team.map(({ champion }) => champion.stats.objectiveControl),
+  );
+  const jungle = roleAttributeAverage(team, "Jungle", [
+    "objectiveControl",
+    "junglePressure",
+    "earlyGame",
+    "sustain",
+  ]);
+  const support = roleAttributeAverage(team, "Support", [
+    "visionControl",
+    "zoneControl",
+    "crowdControl",
+    "engage",
+    "utility",
+  ]);
+  const midPriority = roleAttributeAverage(team, "Mid", [
+    "waveClear",
+    "roaming",
+    "zoneControl",
+    "pickoff",
+    "earlyGame",
+  ]);
+  const botPressure = roleAttributeAverage(team, "Carry", [
+    "dps",
+    "earlyGame",
+    "laneBully",
+    "siege",
+    "objectiveControl",
+  ]);
+  const score =
+    rawObjective * 0.25 +
+    teamAttributeAverage(team, "objectiveControl") * 0.13 +
+    jungle * 0.2 +
+    teamAttributeAverage(team, "visionControl") * 0.07 +
+    teamAttributeAverage(team, "dps") * 0.08 +
+    teamAttributeAverage(team, "teamFight") * 0.07 +
+    teamAttributeAverage(team, "zoneControl") * 0.06 +
+    teamAttributeAverage(team, "pickoff") * 0.04 +
+    support * 0.04 +
+    midPriority * 0.03 +
+    botPressure * 0.03 -
+    Math.max(0, 82 - roleFit) * 0.22;
+  return clamp(score);
+}
 
 const calculateMetrics = (
   team: DraftTeam,
@@ -64,9 +142,9 @@ const calculateMetrics = (
     average(stats.map((entry) => entry.earlyPressure)) - roleDeficit * 0.3,
   );
   const objectiveControl = clamp(
-    average(stats.map((entry) => entry.objectiveControl)) -
-      (100 - jungleFit) * 0.34 -
-      roleDeficit * 0.08,
+    calculateObjectiveReadiness(team, difficulty) -
+      (100 - jungleFit) * 0.12 -
+      roleDeficit * 0.04,
   );
   const teamFight = clamp(average(stats.map((entry) => entry.teamFight)));
   const pickoff = clamp(average(stats.map((entry) => entry.pickoff)));
@@ -127,7 +205,11 @@ const calculateMetrics = (
     crowdControl: blend(baseMetrics.crowdControl, "crowdControl"),
     scaling: blend(baseMetrics.scaling, "scaling"),
     earlyGame: blend(baseMetrics.earlyGame, "earlyGame"),
-    objectiveControl: blend(baseMetrics.objectiveControl, "objectiveControl"),
+    objectiveControl: blend(
+      baseMetrics.objectiveControl,
+      "objectiveControl",
+      0.12,
+    ),
     teamFight: blend(baseMetrics.teamFight, "teamFight"),
     pickoff: blend(baseMetrics.pickoff, "pickoff"),
     splitPush: blend(baseMetrics.splitPush, "splitPush"),
@@ -207,6 +289,15 @@ export function calculateSynergyBonus(
   if (metrics.peel >= 50 && metrics.scaling >= 60) bonus += 4;
   if (metrics.objectiveControl >= 55) bonus += 3;
   if (metrics.cardSynergy >= 75) bonus += 4;
+  if (
+    difficulty === "Classic" &&
+    calculateWinConditionClarity(
+      metrics,
+      detectTeamArchetype(team, difficulty),
+    ) >= 65
+  ) {
+    bonus += 3;
+  }
   if (metrics.frontline < 25) bonus -= 7;
   if (Math.min(metrics.physicalDamage, metrics.magicDamage) < 20) bonus -= 5;
   if (metrics.roleFit < 75) bonus -= 8;
@@ -419,6 +510,14 @@ export function calculateTeamScore(
     metrics.pickoff,
     metrics.splitPush,
   );
+  const identityReward =
+    difficulty === "Classic"
+      ? Math.min(
+          4,
+          Math.max(0, identity.confidence - 50) * 0.045 +
+            Math.max(0, winConditionClarity - 55) * 0.04,
+        )
+      : 0;
   const rawTotal = clamp(
     metrics.roleFit * 0.17 +
       championStrength * 0.13 +
@@ -431,7 +530,8 @@ export function calculateTeamScore(
       metrics.objectiveControl * 0.07 +
       metrics.waveClear * 0.05 +
       winConditionClarity * 0.1 +
-      Math.max(-5, Math.min(4, synergyBonus * 0.45)),
+      Math.max(-5, Math.min(4, synergyBonus * 0.45)) +
+      identityReward,
   );
   const scoreCap = calculateDraftScoreCap(team, rawTotal, difficulty);
   const roleWarnings = team.flatMap((build) => {

@@ -22,6 +22,12 @@ import type {
 import { RogueCardSelection } from "./RogueCardSelection";
 import { RogueLiveMatch } from "./RogueLiveMatch";
 
+const cardOfferContext = (campaign: RogueCampaignState) => ({
+  stage: campaign.currentStage,
+  seriesUserWins: campaign.currentUserWins,
+  seriesEnemyWins: campaign.currentEnemyWins,
+});
+
 type RogueTournamentScreenProps = {
   team: DraftTeam;
   difficulty: GameDifficulty;
@@ -49,7 +55,11 @@ export function RogueTournamentScreen({
     createRogueCampaignState(team, difficulty),
   );
   const [options, setOptions] = useState(() =>
-    getRandomRogueCardOptions([], 3),
+    getRandomRogueCardOptions([], 3, [], {
+      stage: "Groups",
+      seriesUserWins: 0,
+      seriesEnemyWins: 0,
+    }),
   );
   const [prepared, setPrepared] = useState<PreparedRogueMatch | null>(null);
 
@@ -65,7 +75,14 @@ export function RogueTournamentScreen({
       next.currentStage === "Groups" || next.currentGames.length === 0;
     if (needsCardChoice) {
       setPrepared(null);
-      setOptions(getRandomRogueCardOptions(next.activeCards, 3));
+      setOptions(
+        getRandomRogueCardOptions(
+          next.activeCards,
+          3,
+          [],
+          cardOfferContext(next),
+        ),
+      );
     } else {
       setPrepared(prepareRogueCampaignMatch(next));
     }
@@ -86,7 +103,12 @@ export function RogueTournamentScreen({
       const needsCard =
         next.currentStage === "Groups" || next.currentGames.length === 0;
       const card = needsCard
-        ? getRandomRogueCardOptions(next.activeCards, 1)[0]
+        ? getRandomRogueCardOptions(
+            next.activeCards,
+            1,
+            [],
+            cardOfferContext(next),
+          )[0]
         : undefined;
       if (needsCard && !card) break;
       next = advanceRogueCampaignState(
@@ -131,7 +153,14 @@ export function RogueTournamentScreen({
       refreshesRemaining={refreshesRemaining}
       onRefresh={() => {
         if (refreshesRemaining <= 0) return;
-        setOptions(refreshRogueCardOptions(campaign.activeCards, options, 3));
+        setOptions(
+          refreshRogueCardOptions(
+            campaign.activeCards,
+            options,
+            3,
+            cardOfferContext(campaign),
+          ),
+        );
         onConsumeRefresh();
       }}
       onConfirm={chooseCard}

@@ -10,6 +10,7 @@
     "sync:champions": "tsx scripts/syncChampions.ts",
     "generate:item-icons": "tsx scripts/generateItemIcons.ts",
     "balance": "tsx scripts/balanceTournament.ts",
+    "audit:identity": "tsx scripts/auditTeamIdentity.ts",
     "test": "vitest run"
   },
   "dependencies": {

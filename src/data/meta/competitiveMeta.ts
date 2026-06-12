@@ -128,12 +128,12 @@ export const tournamentDifficultyScaling: Record<
   Classic: {
     stages: {
       Groups: 0,
-      Quarterfinals: 8,
-      Semifinals: 14,
-      Final: 20,
+      Quarterfinals: 6,
+      Semifinals: 11,
+      Final: 16,
     },
     badItemPenaltyMultiplier: 1.15,
-    badCompPenaltyMultiplier: 1.12,
+    badCompPenaltyMultiplier: 1,
   },
   Hard: {
     stages: {
